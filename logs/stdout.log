@@ -1,0 +1,14 @@
+ 31-May-24 13:37:27 :: test :: DEBUG :: hola 5
+ 31-May-24 13:37:27 :: test :: INFO :: hola 5
+ 31-May-24 13:37:27 :: test :: WARNING :: hola 5
+ 31-May-24 13:37:27 :: test :: ERROR :: hola .................5
+ 31-May-24 13:37:27 :: test :: CRITICAL :: hola 5
+ 31-May-24 13:37:27 :: test2 :: DEBUG :: que pasa chavales
+ 31-May-24 13:37:27 :: test2 :: DEBUG :: que pasa chavales
+ 31-May-24 13:37:27 :: test2 :: DEBUG :: que pasa chavales
+ 31-May-24 13:37:27 :: test2 :: INFO :: que pasa chavales
+ 31-May-24 13:37:27 :: test2 :: ERROR :: me mandaron al stderr. Buenas aqui es?
+ 31-May-24 13:37:27 :: test3 :: DEBUG :: hola 5
+ 31-May-24 13:37:27 :: test3 :: INFO :: hola 5
+ 31-May-24 13:37:27 :: test3 :: WARNING :: hola 5
+ 31-May-24 13:37:27 :: test3 :: CRITICAL :: hola 5

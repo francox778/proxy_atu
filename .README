@@ -1,0 +1,4 @@
+Solucion:
+    1. Hay dos modulos principales. ContextIO(recibe y envia), DeviceManager().
+
+        ContextIO  es un selector que registrara todos los sockets. recibira todos los mensajes y enviara todos los mensajes.
