@@ -12,7 +12,7 @@ import protocolV1_1.protocol_headers as prtcl_h
 from translator_atu_http import ThttpRequests as thttp
 from translator_atu_http import THttpAns, THttpError
 import atuHttp
-
+import echos
 
 import colored_logger
 import logging
@@ -75,6 +75,7 @@ class ConnectionThread(threading.Thread):
                 except io.ValidMessageException:
                     self.timeoutCnt = 0
                     packet = self.io.getPacket()
+                    logger.debug(f" {echos.bytearray2str(packet)}")
                     [packet_type,  packet_data]  = prtcl.Imain.factory_read(packet)
                     packet_type_choices = self.packet_type_choices.get(packet_type)
                     if packet_type_choices:
@@ -113,6 +114,7 @@ class ConnectionThread(threading.Thread):
                 except io.ValidMessageException:
                     self.timeoutCnt = 0
                     packet = self.io.getPacket()
+                    logger.debug(f" {echos.bytearray2str(packet)}")
                     [packet_type,  packet_data]  = prtcl.Imain.factory_read(packet)
                     packet_type_choices = self.packet_type_choices.get(packet_type)
                     if packet_type_choices:
