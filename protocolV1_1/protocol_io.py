@@ -38,6 +38,10 @@ import colorama as cr
 logger = colored_logger.Logger("protocol_reader", logging.INFO, cr.Fore.YELLOW)
 logger.add_stderr(level=logging.ERROR)
 
+MAX_LEN = 2000
+
+
+
 class read_state(Enum):
     SYNC = 0
     HEADER = 1 
@@ -134,12 +138,15 @@ class packet_reader():
             self._packet_len  = struct.unpack(f"{protocol_headers.ENDIANESS}H", self.recv_buf[0:2])[0]
             self.recv_buf = self.recv_buf[2:]
             self.read_state = read_state.DATA
+            if self._packet_len > 2000:
+                logger.error(f" longitud del paquete muy largo {self._packet_len}")
 
     def _process_data(self):
         if len(self.recv_buf) >= self._packet_len:
             self._packet_data = self.recv_buf[:self._packet_len]
             self.recv_buf = self.recv_buf[self._packet_len:]
             self.read_state = read_state.FOOTER
+
 
     def _process_footer(self): 
         if len(self.recv_buf) >= protocol_headers.FOOTER_LEN:

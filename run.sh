@@ -12,7 +12,7 @@ trap limpiar EXIT
 pid1=$!
 ./scripts/trunk_file.sh ./logs/stdout.log 10000 &
 pid2=$!
-python ./appProxy 1>logs/stdout.log 2>logs/stderr.log
+python ./appProxy.py 1>logs/stdout.log 2>logs/stderr.log &
 pid3=$!
 
 echo "Procesos iniciados: $pid1 $pid2 $pid3"

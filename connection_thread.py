@@ -37,6 +37,7 @@ class ConnectionThread(threading.Thread):
         self.token = ""
         self.imei = "NN" #nomen nescio
         self.http = atuHttp.AtuHttp("https://billingws.gpstracking.pe/v1/api/")
+        self.timeoutCnt = 0
 
         self.packet_type_choices = {
             prtcl_h.packet_type.LOGIN.value      : self.login_handler ,
@@ -72,6 +73,7 @@ class ConnectionThread(threading.Thread):
                 try:
                     self.io.readBlocking(timeout)
                 except io.ValidMessageException:
+                    self.timeoutCnt = 0
                     packet = self.io.getPacket()
                     [packet_type,  packet_data]  = prtcl.Imain.factory_read(packet)
                     packet_type_choices = self.packet_type_choices.get(packet_type)
@@ -84,12 +86,20 @@ class ConnectionThread(threading.Thread):
                 except prtcl.WrongType:
                     logger.error(f"NN packet type invalido")       
                 except io.TimeOutException:
-                    logger.info(f"{self.imei}  timeout1 {timeout}s")
+                    self.timeoutCnt = self.timeoutCnt + 1
+                    logger.info(f"{self.imei}  timeout1 {timeout}s n:{self.timeoutCnt}x{timeout}seg")
+                    if self.timeoutCnt == 10:
+                        logger.info(f"{self.imei}  conexion inactiva {self.timeoutCnt}x{timeout}seg")
+                        raise io.ClosedSocketException
                 except io.ClosedSocketException as e:
-                    logger.error(f"{self.imei} Conexion cerrada!")
+                    #logger.error(f"{self.imei} Conexion cerrada!")
                     raise 
+                except (socket.timeout, socket.gaierror) as err:
+                    #logger.error(f"{self.imei} timeout Conexion cerrada!")
+                    raise
                 except KeyboardInterrupt:
                     raise
+
                 except Exception as e:
                     logger.error(f"{self.imei} {e}", exc_info=True)
                 finally:
@@ -101,6 +111,7 @@ class ConnectionThread(threading.Thread):
                 try:
                     self.io.readBlocking(timeout)
                 except io.ValidMessageException:
+                    self.timeoutCnt = 0
                     packet = self.io.getPacket()
                     [packet_type,  packet_data]  = prtcl.Imain.factory_read(packet)
                     packet_type_choices = self.packet_type_choices.get(packet_type)
@@ -109,14 +120,23 @@ class ConnectionThread(threading.Thread):
                     else:
                         logger.error(f"invalid packet type.")
                     if not self.logged:
-                        break            
+                        break    
+                    if self.end:
+                        raise io.ClosedSocketException       
                 except io.TimeOutException:
-                    logger.info(f"{self.imei}  timeout2 {timeout}s")
+                    self.timeoutCnt = self.timeoutCnt + 1
+                    logger.info(f"{self.imei}  timeout2 {timeout}s n:{self.timeoutCnt}x{timeout}seg")
+                    if self.timeoutCnt == 10:
+                        logger.info(f"{self.imei}  conexion inactiva {self.timeoutCnt}x{timeout}seg")
+                        raise io.ClosedSocketException
                     pass
                 except io.ClosedSocketException as e:
-                    logger.error(f"{self.imei} Conexion cerrada!")
+                    #logger.error(f"{self.imei} Conexion cerrada!")
                     raise
                 except KeyboardInterrupt:
+                    raise
+                except (socket.timeout, socket.gaierror) as err:
+                    #logger.error(f"{self.imei} Conexion cerrada!")
                     raise
                 except Exception as e:
                     logger.error(f"{self.imei} {e}", exc_info=True)
@@ -126,12 +146,13 @@ class ConnectionThread(threading.Thread):
         except KeyboardInterrupt:
             raise
         except io.ClosedSocketException as e:
+            logger.debug(f"{self.imei} conexion_cerrada")
             raise   
         except Exception as e:
             logger.error(f"{self.imei} {e}", exc_info=True)
         finally:
             self.sock.close()
-            logger.debug(f"{self.imei} conexion_cerrada")
+            #logger.debug(f"{self.imei} conexion_cerrada")
 
 
 
@@ -183,7 +204,7 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.error_codes.OK.value))
         self.io.write(Bresponse)
         self.end = True
-
+        logger.debug(f"logout_h> {self.imei} logout recibido!")
 
 
     def ping_handler(self, packet_data):

@@ -28,6 +28,7 @@ class AcceptorThread(threading.Thread):
                 conn, addr = lsock.accept()
                 logger.debug(f"nueva conexion {addr}")
                 conn.settimeout(100)
+                conn.setblocking(False)
                 connection = connection_thread.ConnectionThread(conn, addr)
                 connection.start()
         except KeyboardInterrupt:

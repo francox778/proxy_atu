@@ -118,6 +118,9 @@ class ConnectionThread(threading.Thread):
                 except io.ClosedSocketException as err:
                     logger.error(f"{self.imei} Conexion cerrada!")
                     raise
+                except socket.timeout as err:
+                    logger.error(f"{self.imei} Conexion cerrada!")
+                    raise
                 except Exception as e:
                     logger.error(f"{self.imei} {e}", exc_info=True)
                 finally:
@@ -146,13 +149,16 @@ class ConnectionThread(threading.Thread):
                 except io.ClosedSocketException as err:
                     print(f"{err}")
                     raise
+                except socket.timeout as err:
+                    logger.error(f"{self.imei} Conexion cerrada!")
+                    raise
                 except Exception as e:
                     logger.error(f"{self.imei} {e}", exc_info=True)
                 finally:
                     pass
 
         except Exception as e:
-            logger.error(f"response_h> {self.imei}, {e}")
+            logger.error(f"Conexion cerrada {self.imei}, {e}")
             s.close()
 
     def login_handler(self, packet_data):
@@ -296,6 +302,7 @@ if __name__ == "__main__":
     q = queue.Queue()
     inputThread = InputThread(q)
     connectionThread = ConnectionThread(ip='127.0.0.1', port=22222, q=q)
+    #connectionThread = ConnectionThread(ip='18.229.227.108', port=60001, q=q)
     inputThread.start()
     connectionThread.start()
     inputThread.join()
