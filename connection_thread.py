@@ -333,13 +333,13 @@ class ConnectionThread(threading.Thread):
             http_code = thttp.tickets(self.http ,Ttickets)
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
-                                                    prtcl_h.error_codes.OK.value))
+                                                    prtcl_h.error_codes.TICKETS_RECIBIDOS.value))
             self.io.write(Bresponse)
             logger.debug(f"{myfmt('tickets')}::{self.imei} tickets recibidos{len(Ttickets)}") 
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
-                                                    prtcl_h.error_codes.OK.value))
+                                                    prtcl_h.error_codes.TICKETS_RECIBIDOS_ERROR.value))
             self.io.write(data)
             logger.error(f"{myfmt('tickets')}::{self.imei} {e}")  
 

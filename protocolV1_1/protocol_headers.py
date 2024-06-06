@@ -22,6 +22,9 @@ class error_codes(Enum):
 	ID_ERRONEO = 1
 	SERVICIO_NO_DISPONIBLE = 2
 	NOT_SPECIFIED = 3
+	IMEI_NO_REGISTRADO =4
+	TICKETS_RECIBIDOS = 5
+	TICKETS_RECIBIDOS_ERROR = 6
 
 class packet_type(Enum):
 	LOGIN = 0	  

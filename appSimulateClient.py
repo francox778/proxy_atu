@@ -287,7 +287,13 @@ class ConnectionThread(threading.Thread):
             self.io.write(Btarifa)
 
         if item == 5:
-            pass
+            ticket0 = content.tickets_data_tuple(1, 5, 10000000001, 654646546)
+            ticket1 = content.tickets_data_tuple(1, 6, 10000000002, 654646547)
+            ticket2 = content.tickets_data_tuple(1, 8, 10000000003, 654646548)
+            ticket3 = content.tickets_data_tuple(1, 9, 10000000004, 654646549)
+            tickets =[ ticket0, ticket1, ticket2, ticket3]
+            Btickets = prtcl.Icontent.ticketsW(tickets)
+            self.io.write(Btickets)
 
         if item == 6:
             Bhojaderuta = prtcl.Irequest.hoja_de_rutaW()

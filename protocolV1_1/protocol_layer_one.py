@@ -283,6 +283,13 @@ class Icontent():
         return Ttickets
 
     @staticmethod
+    def ticketsW(data: "list[protocol_layer_two_content.tickets_data_tuple]") -> bytearray:
+        buff = protocol_layer_two_content.tickets_data.write(data)
+        return trunc_1byte(protocol_headers.packet_type.DATA.value) +\
+               trunc_1byte(protocol_headers.content_type.TICKETS.value) + buff
+
+
+    @staticmethod
     def factory_write(type: protocol_headers.content_type, buff: bytearray):
         return trunc_1byte(protocol_headers.packet_type.DATA.value) + trunc_1byte(type) + buff
         

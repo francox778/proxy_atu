@@ -26,6 +26,10 @@ class THttpAns(Exception):
     """
     pass
 
+class THttpToken(Exception):
+    """cuando el problema esta relacionado al toke"""
+    pass
+
 class ThttpRequests():
     @staticmethod
     def login(http: atuHttp.AtuHttp, data: login_tuple) :
@@ -69,7 +73,13 @@ class ThttpRequests():
     @staticmethod
     def tickets(http: atuHttp.AtuHttp, t: "list[tickets_data_tuple]"):
         d = protocol2http.tickets(t)
-        r = http.tickets_generados(d.json())
+        r = http.tickets_generados(**d)
+        code  = r.status_code
+        if code != 200:
+            raise THttpError(f"Error http {code}")
+
+        if r.json().get("status") == False:
+            raise THttpAns(f"Error {r.json()}") 
         return r
 
 

@@ -53,7 +53,7 @@ class AtuHttp:
         if not all( r in kwargs for r in required):
             raise InvalidParameters("Falta un parametro en tickets_generados " + " ".join(required))
         self.session.headers['Authorization'] = f'Bearer {self.token if not token else token}'
-        return self._request("GET", f"{self.base_url}tickets", body={**kwargs})
+        return self._request("POST", f"{self.base_url}tickets", body={**kwargs})
 
     def getToken(self):
         return self.token
