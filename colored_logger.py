@@ -36,6 +36,8 @@ levelMapping = {
 
 cr.init(autoreset=True)
 
+
+
 class MyFilter(object):
     def __init__(self, level):
         self.__level = level
@@ -61,8 +63,8 @@ class Logger:
         self._level = level
         self._exclude_level = exclude_level
         self._logger = logging.getLogger(name)
-        self.format = "%(asctime)s :: %(name).20s :: %(levelname).8s :: %(message)s"
-        formatter = logging.Formatter(fmt= f"{self._color} {self.format}", datefmt='%d-%b-%y %H:%M:%S')
+        self.format = "[%(asctime)s][%(name)-8s][%(levelname)-5s] %(message)s"
+        formatter = logging.Formatter(fmt= f"{self._color} {self.format}", datefmt='%d-%m-%y %H:%M:%S') #%b
         handler = logging.StreamHandler(stream=sys.stdout)
         handler.setFormatter(formatter)
         handler.setLevel(self._level)
@@ -74,7 +76,7 @@ class Logger:
     def add_stderr(self, level= logging.ERROR):
         handler = logging.StreamHandler(stream=sys.stderr)
         handler.setLevel(level = level)
-        formatter = logging.Formatter(fmt = self.format, datefmt='%d-%b-%y %H:%M:%S')
+        formatter = logging.Formatter(fmt = self.format, datefmt='%d-%m-%y %H:%M:%S')
         handler.setFormatter(formatter)
         handler.addFilter(MyFilter(level = level))
         self._logger.addHandler(handler)
@@ -82,7 +84,7 @@ class Logger:
     def add_logger_file(self, log_file, level = logging.ERROR, mode = "w" , encoding = "utf-8"):
         file_handler = logging.FileHandler(log_file, encoding = 'utf-8', mode = 'a') #a de append w sobreescribe.
         file_handler.setLevel(level = level)
-        formatter = logging.Formatter(fmt = self.format, datefmt='%d-%b-%y %H:%M:%S')
+        formatter = logging.Formatter(fmt = self.format, datefmt='%d-%m-%y %H:%M:%S')
         file_handler.setFormatter(formatter)
         file_handler.addFilter(MyFilter(level= level)) # type: ignore
         self._logger.addHandler(file_handler)
@@ -132,4 +134,3 @@ if __name__ == "__main__":
     logger3.warning("hola %d", 5)
     logger3.error("hola .................%d", 5)
     logger3.critical("hola %d", 5)
-    

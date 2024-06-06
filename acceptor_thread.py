@@ -8,7 +8,7 @@ import connection_thread
 
 import protocolV1_1.protocol_io as io
 
-logger = colored_logger.Logger("acceptor_thread", logging.DEBUG, cr.Fore.GREEN)
+logger = colored_logger.Logger("acc_thr", logging.DEBUG, cr.Fore.GREEN)
 logger.add_stderr(logging.ERROR)
 
 class AcceptorThread(threading.Thread):

@@ -447,4 +447,25 @@ Bposicionesx1  = {BposicionesLen}""")
 
 
 
-#eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjozOTgsInBsYXRlX2lkIjoyNTcsInBsYXRlIjoiRjlEODc4LVRFU1QiLCJyb3V0ZV9pZCI6MSwiY29tcGFueV9pZCI6MSwic2VyaWVfaWQiOjM1MTMxLCJuYW1lIjoiSk9KSEFOIEpPUkdFIiwicHJvZ3JhbWF0aW9uX2lkIjoxLCJpYXQiOjE3MTc1Mzk2NDk0MTJ9.2406kcGo__gDr9sb9v843-lSmdZGO0NbP1POCIXRAjs
+    authentication = authentication_data_tuple(    
+                name =          b'',
+                lastname =      b'',
+                doc_number =    b'',
+                pattern_code =  b'pattern_code',
+                route_code =    b'route_code',
+                name_company =  b'name_company',
+                logo =          b'logo',
+                ruc =           b'ruc',
+                ruc_soat =      b'ruc_soat',
+                policy =        b'policy',
+                company =       b'company',
+                token=          b'1561565165169196165161651616',
+                ticket_init =   10000000001,
+                from_time =     1200,
+                to_time =       1500)
+    
+    Bauth = authentication_data.write(authentication)
+    print(echos.bytearray2str(Bauth))
+
+    buff = authentication_data.read(Bauth)
+    print(buff)

@@ -35,7 +35,7 @@ import colored_logger
 import logging
 import colorama as cr
 
-logger = colored_logger.Logger("protocol_reader", logging.INFO, cr.Fore.YELLOW)
+logger = colored_logger.Logger("prtcl_io", logging.INFO, cr.Fore.YELLOW)
 logger.add_stderr(level=logging.ERROR)
 
 MAX_LEN = 2000
@@ -108,7 +108,7 @@ class packet_reader():
             if data:
                 self.recv_buf.extend(data)
             else:
-                raise ClosedSocketException("")
+                raise ClosedSocketException("closed")
 
 
 

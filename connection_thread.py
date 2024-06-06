@@ -18,11 +18,12 @@ import colored_logger
 import logging
 import colorama as cr
 
-logger = colored_logger.Logger("connectionThread", logging.DEBUG, cr.Fore.CYAN)
+logger = colored_logger.Logger("conn_thr", logging.DEBUG, cr.Fore.CYAN)
 logger.add_stderr(logging.ERROR)
 
-
-
+H_TXT_LEN = 8
+def myfmt(log: str) -> str:
+    return log.ljust(H_TXT_LEN)
 
 
 class ConnectionThread(threading.Thread):
@@ -88,9 +89,9 @@ class ConnectionThread(threading.Thread):
                     logger.error(f"NN packet type invalido")       
                 except io.TimeOutException:
                     self.timeoutCnt = self.timeoutCnt + 1
-                    logger.info(f"{self.imei}  timeout1 {timeout}s n:{self.timeoutCnt}x{timeout}seg")
+                    logger.info(f"{myfmt('timeout1')}::{self.imei}  timeout1 {timeout}s n:{self.timeoutCnt}x{timeout}seg")
                     if self.timeoutCnt == 10:
-                        logger.info(f"{self.imei}  conexion inactiva {self.timeoutCnt}x{timeout}seg")
+                        logger.info(f"{myfmt('timeout1')}::{self.imei}  conexion inactiva {self.timeoutCnt}x{timeout}seg")
                         raise io.ClosedSocketException
                 except io.ClosedSocketException as e:
                     #logger.error(f"{self.imei} Conexion cerrada!")
@@ -114,22 +115,22 @@ class ConnectionThread(threading.Thread):
                 except io.ValidMessageException:
                     self.timeoutCnt = 0
                     packet = self.io.getPacket()
-                    logger.debug(f" {echos.bytearray2str(packet)}")
+                    logger.debug(f"{self.imei} {echos.bytearray2str(packet)}")
                     [packet_type,  packet_data]  = prtcl.Imain.factory_read(packet)
                     packet_type_choices = self.packet_type_choices.get(packet_type)
                     if packet_type_choices:
                         packet_type_choices(packet_data)
                     else:
-                        logger.error(f"invalid packet type.")
+                        logger.error(f"{myfmt('err')}::{self.imei} invalid packet type")
                     if not self.logged:
                         break    
                     if self.end:
                         raise io.ClosedSocketException       
                 except io.TimeOutException:
                     self.timeoutCnt = self.timeoutCnt + 1
-                    logger.info(f"{self.imei}  timeout2 {timeout}s n:{self.timeoutCnt}x{timeout}seg")
+                    logger.info(f"{myfmt('timeout2')}::{self.imei} {timeout}s n:{self.timeoutCnt}x{timeout}seg")
                     if self.timeoutCnt == 10:
-                        logger.info(f"{self.imei}  conexion inactiva {self.timeoutCnt}x{timeout}seg")
+                        logger.info(f"{myfmt('timeout2')}::{self.imei}  conexion inactiva {self.timeoutCnt}x{timeout}seg")
                         raise io.ClosedSocketException
                     pass
                 except io.ClosedSocketException as e:
@@ -148,12 +149,12 @@ class ConnectionThread(threading.Thread):
         except KeyboardInterrupt:
             raise
         except io.ClosedSocketException as e:
-            logger.debug(f"{self.imei} conexion_cerrada")
-            raise   
+            pass
         except Exception as e:
             logger.error(f"{self.imei} {e}", exc_info=True)
         finally:
             self.sock.close()
+            logger.info(f"{self.imei}::conexion_cerrada")   
             #logger.debug(f"{self.imei} conexion_cerrada")
 
 
@@ -168,7 +169,7 @@ class ConnectionThread(threading.Thread):
     def login_handler(self, packet_data):
         # Validamos al usuario
         Tlogin = prtcl.login.read(packet_data)
-        logger.info(f"login_h> intento de conexion : imei: {Tlogin.imei}, ver: {Tlogin.ver}, token: {Tlogin.token}, pcode: {Tlogin.pattern_code}")
+        logger.info(f"{myfmt('login')}:: intento de conexion : imei: {Tlogin}")
         self.imei = str(Tlogin.imei)
         self.token = Tlogin.token
         
@@ -179,7 +180,7 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.error_codes.OK.value))
             self.logged = True
             self.io.write(Bdata)
-            logger.info(f"login_h> Usuario ya cuenta con un token, conexion automatica")
+            logger.info(f"{myfmt('login')}:: Usuario ya cuenta con un token, conexion automatica")
             self.http.setToken(self.token.decode('latin-1'))
             return
         try:
@@ -188,14 +189,14 @@ class ConnectionThread(threading.Thread):
             Bauth = prtcl.Icontent.authW(Tauth)
             self.io.write(Bauth)
 
-            logger.info(f"login_h> {self.imei}  conexion Exitosa!")            
+            logger.info(f"{myfmt('login')}::{self.imei}  conexion Exitosa!")            
         except (ValueError, THttpError, THttpAns) as e:
             self.logged = False
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
                                                     prtcl_h.error_codes.OK.value))
             self.io.write(Bresponse)
-            logger.error(f"login_h> Error de conexion! {self.imei} {e}") 
+            logger.error(f"{myfmt('login')}::{self.imei}  Error de conexion! {e}") 
         
 
     def logout_handler(self, packet_data):
@@ -206,7 +207,7 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.error_codes.OK.value))
         self.io.write(Bresponse)
         self.end = True
-        logger.debug(f"logout_h> {self.imei} logout recibido!")
+        logger.debug(f"{myfmt('logout')}::{self.imei} recibido!")
 
 
     def ping_handler(self, packet_data):
@@ -215,13 +216,13 @@ class ConnectionThread(threading.Thread):
             Tping = prtcl.Imain.pingR(packet_data)
             Bping = prtcl.Imain.pingW(Tping)
             self.io.write(Bping)
-            logger.debug(f"ping_h> {self.imei} {Tping.timens}ns consulta Exitosa!")
+            logger.debug(f"{myfmt('ping')}::{self.imei} {Tping.timens}ns consulta Exitosa!")
         except ValueError as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
                                                     prtcl_h.error_codes.OK.value))
             self.io.write(Bresponse)
-            logger.debug(f"ping_h> ERROR {e}")
+            logger.debug(f"{myfmt('ping')}::{self.imei} ERROR {e}")
 
     def cmd_handler(self, packet_data):
         pass
@@ -230,11 +231,11 @@ class ConnectionThread(threading.Thread):
         try:
             Tresponse = prtcl.Imain.responseR(packet_data)
             if Tresponse.ack == prtcl_h.response.ACK.value:
-                logger.debug(f"response_h> {self.imei}, ACK,  ec: {Tresponse.ec}")
+                logger.debug(f"{myfmt('response')}::{self.imei}, ACK,  ec: {Tresponse.ec}")
             else:
-                logger.debug(f"response_h> {self.imei}, NACK, ec: {Tresponse.ec}")
+                logger.debug(f"{myfmt('response')}::{self.imei}, NACK, ec: {Tresponse.ec}")
         except ValueError as e:
-            logger.debug(f"response_h> {self.imei}, {e}")
+            logger.debug(f"{myfmt('response')}::{self.imei}, {e}")
 
     def request_handler(self, packet_data):
         [type, data] = prtcl.Irequest.factory_read(packet_data)
@@ -261,13 +262,13 @@ class ConnectionThread(threading.Thread):
             Ttarifa = thttp.tarifa(self.http)
             Btarifa = prtcl.Icontent.tarifaW(Ttarifa)
             self.io.write(Btarifa)
-            logger.debug(f"tarifa_h> {self.imei} consulta Exitosa!") 
+            logger.debug(f"{myfmt('tarifa')}::{self.imei} consulta Exitosa!") 
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
                                                     prtcl_h.error_codes.OK.value))
             self.io.write(Bresponse)
-            logger.error(f"tarifa_h> {self.imei} {e}") 
+            logger.error(f"{myfmt('tarifa')}::{self.imei} {e}") 
 
 
 
@@ -281,26 +282,26 @@ class ConnectionThread(threading.Thread):
             Thojaderuta = thttp.hoja_de_ruta(self.http)
             Bhojaderuta = prtcl.Icontent.hoja_de_rutaW(Thojaderuta)
             self.io.write(Bhojaderuta)
-            logger.debug(f"hoja_h>{self.imei} ") 
+            logger.debug(f"{myfmt('hoja')}::{self.imei} consulta Exitosa! {len(Thojaderuta)}") 
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
                                                     prtcl_h.error_codes.OK.value))
             self.io.write(Bresponse)
-            logger.error(f"hoja_h> {self.imei} {e}") 
+            logger.error(f"{myfmt('hoja')}::{self.imei} {e}") 
 
     def posiciones_req_handler(self, data):
         try:
             Tposiciones = thttp.posiciones(self.http)
             Bposiciones = prtcl.Icontent.posicionesW(Tposiciones)
             self.io.write(Bposiciones)
-            logger.debug(f"posiciones> {self.imei} consulta Exitosa!") 
+            logger.debug(f"{myfmt('pos')}::{self.imei} consulta Exitosa!") 
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
                                                     prtcl_h.error_codes.OK.value))
             self.io.write(Bresponse)
-            logger.error(f"posiciones> {self.imei} {e}") 
+            logger.error(f"{myfmt('pos')}::{self.imei} {e}") 
 
 
 #######################################  CONTENT  #####################################################
@@ -312,14 +313,14 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.response.ACK.value,
                                                     prtcl_h.error_codes.OK.value))
             self.io.write(Bresponse)
-            logger.debug(f"alerta_h> {self.imei} envio Exitoso!") 
+            logger.debug(f"{myfmt('alerta')}::{self.imei} envio Exitoso!") 
             
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
                                                     prtcl_h.error_codes.OK.value))
             self.io.write(Bresponse)
-            logger.error(f"alerta_h> {self.imei} {e}")  
+            logger.error(f"{myfmt('alerta')}::{self.imei} {e}")  
 
 
     def tarifa_content_handler(self, data): 
@@ -334,13 +335,13 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.response.ACK.value,
                                                     prtcl_h.error_codes.OK.value))
             self.io.write(Bresponse)
-            logger.debug(f"tickets_h>{self.imei} ") 
+            logger.debug(f"{myfmt('tickets')}::{self.imei} tickets recibidos{len(Ttickets)}") 
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
                                                     prtcl_h.error_codes.OK.value))
             self.io.write(data)
-            logger.error(f"tickets_h> {self.imei} {e}")  
+            logger.error(f"{myfmt('tickets')}::{self.imei} {e}")  
 
     def hoja_de_ruta_content_handler(self, data):  
         # no hay
