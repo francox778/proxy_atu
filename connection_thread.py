@@ -216,7 +216,7 @@ class ConnectionThread(threading.Thread):
             Tping = prtcl.Imain.pingR(packet_data)
             Bping = prtcl.Imain.pingW(Tping)
             self.io.write(Bping)
-            logger.debug(f"{myfmt('ping')}::{self.imei} {Tping.timens}ns consulta Exitosa!")
+            logger.debug(f"{myfmt('ping')}::{self.imei} {Tping.timens}ms consulta Exitosa!")
         except ValueError as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
@@ -266,7 +266,7 @@ class ConnectionThread(threading.Thread):
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
-                                                    prtcl_h.error_codes.OK.value))
+                                                    prtcl_h.error_codes.TARIFA_ERROR.value))
             self.io.write(Bresponse)
             logger.error(f"{myfmt('tarifa')}::{self.imei} {e}") 
 
@@ -286,7 +286,7 @@ class ConnectionThread(threading.Thread):
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
-                                                    prtcl_h.error_codes.OK.value))
+                                                    prtcl_h.error_codes.HOJA_DE_RUTA_ERROR.value))
             self.io.write(Bresponse)
             logger.error(f"{myfmt('hoja')}::{self.imei} {e}") 
 
@@ -299,7 +299,7 @@ class ConnectionThread(threading.Thread):
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
-                                                    prtcl_h.error_codes.OK.value))
+                                                    prtcl_h.error_codes.POSICIONES_ERROR.value))
             self.io.write(Bresponse)
             logger.error(f"{myfmt('pos')}::{self.imei} {e}") 
 
@@ -311,14 +311,14 @@ class ConnectionThread(threading.Thread):
             http_code = thttp.alerta(self.http, Talerta)
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
-                                                    prtcl_h.error_codes.OK.value))
+                                                    prtcl_h.error_codes.ALERTA_ENVIADA.value))
             self.io.write(Bresponse)
             logger.debug(f"{myfmt('alerta')}::{self.imei} envio Exitoso!") 
             
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
-                                                    prtcl_h.error_codes.OK.value))
+                                                    prtcl_h.error_codes.ALERTA_NO_ENVIADA.value))
             self.io.write(Bresponse)
             logger.error(f"{myfmt('alerta')}::{self.imei} {e}")  
 

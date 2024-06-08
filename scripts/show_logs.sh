@@ -40,10 +40,10 @@ else
 fi
 
 
-#tail -n $LINES_BEFORE -F $FILENAME 2>/dev/null | while IFS= read line 
+#tail -n $LINES_BEFORE -F $FILENAME 2>/dev/null | while IFS= read line #
 
 
-tail -F $FILENAME | while IFS= read line
+tail -n $LINES_BEFORE -F $FILENAME | while IFS= read line
 do
   if [ -n $FILTER ]; then
     if [[ $line == *"$FILTER"* ]]; then

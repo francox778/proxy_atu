@@ -1,3 +1,14 @@
+import os
+import sys
+
+ruta_proyecto = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ruta_proyecto not in sys.path:
+    sys.path.append(ruta_proyecto)
+
+import fake_data
+
+
+from CONFIG import App
 from protocol2http import protocol2http
 from http2protocol import http2protocol
 import atuHttp
@@ -50,25 +61,58 @@ class ThttpRequests():
     def alerta(http: atuHttp.AtuHttp, alerta: alerta_data_tuple) :
         d = protocol2http.alerta(alerta.timestamp)
         r = http.alerta(**d)
+        code  = r.status_code
+        if code != 200:
+            raise THttpError(f"Error http {code}")
+        if r.json().get("status") == False:
+            raise THttpAns(f"Error {r.json()}")    
+
         return r.status_code
-    
-    @staticmethod
-    def hoja_de_ruta(http: atuHttp.AtuHttp) :
-        r = http.hoja_de_ruta()
-        r = http2protocol.hoja_de_ruta(r.json())
-        return r
+
     
     @staticmethod
     def tarifa(http: atuHttp.AtuHttp) :
         r = http.tarifa()
+        code  = r.status_code
+        if code != 200:
+            raise THttpError(f"Error http {code}")
+        if r.json().get("status") == False:
+            raise THttpAns(f"Error {r.json()}") 
         r = http2protocol.tarifa(r.json())
         return r
     
     @staticmethod
     def posiciones(http: atuHttp.AtuHttp) :
         r = http.posiciones()
-        r = http2protocol.obtener_posiciones(r.json())
+        code  = r.status_code
+        if code != 200:
+            raise THttpError(f"Error http {code}")
+        if r.json().get("status") == False:
+            raise THttpAns(f"Error {r.json()}") 
+        r = None
+        FAKE = App.config().getboolean(section="FAKEDATA", option="POSICIONES_FAKE")
+        if FAKE:
+            r = fake_data.posicionesBuff
+        else:
+            r = http2protocol.obtener_posiciones(r.json())
         return r
+
+    @staticmethod
+    def hoja_de_ruta(http: atuHttp.AtuHttp) :
+        r = http.hoja_de_ruta()
+        code  = r.status_code
+        if code != 200:
+            raise THttpError(f"Error http {code}")
+        if r.json().get("status") == False:
+            raise THttpAns(f"Error {r.json()}") 
+        r = None
+        FAKE = App.config().getboolean(section="FAKEDATA", option="HOJA_DE_RUTA_FAKE")
+        if FAKE:
+            r = fake_data.paraderos
+        else:
+            r = http2protocol.hoja_de_ruta(r.json())
+        return r
+
 
     @staticmethod
     def tickets(http: atuHttp.AtuHttp, t: "list[tickets_data_tuple]"):

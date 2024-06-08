@@ -254,9 +254,9 @@ class hoja_de_ruta_data():
             stop = paradero.stop + bytearray([0])
             estimated_time = struct.pack(f"{protocol_headers.ENDIANESS}H", paradero.estimated_time)
             arrival_time   = struct.pack(f"{protocol_headers.ENDIANESS}H", paradero.arrival_time) 
-            complete       = struct.pack(f"{protocol_headers.ENDIANESS}B", paradero.state)
+            state       = struct.pack(f"{protocol_headers.ENDIANESS}B", paradero.state)
             difference     = struct.pack(f"{protocol_headers.ENDIANESS}h", paradero.difference)
-            buff += stop + estimated_time + arrival_time + complete + difference
+            buff += stop + estimated_time + arrival_time + state + difference
         return buff
         #n.paraderos uint8_t
         #stop 	 		char array termina en 0 

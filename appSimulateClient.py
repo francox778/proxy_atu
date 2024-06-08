@@ -172,7 +172,7 @@ class ConnectionThread(threading.Thread):
     def ping_handler(self, packet_data):
         # Enviamos ACK
         Tping = prtcl.Imain.pingR(packet_data)
-        elapsed_time = (time.perf_counter_ns() - Tping.timens)/1000000
+        elapsed_time = int(time.time() * 1000) - Tping.timens
         logger.debug(f"{self.imei}, {elapsed_time}ms")
         Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(prtcl_h.response.ACK.value, prtcl_h.error_codes.NOT_SPECIFIED.value))     
         self.io.write(Bresponse)
@@ -275,7 +275,7 @@ class ConnectionThread(threading.Thread):
             self.io.write(Blogout)
 
         if item == 2:
-            Bping = prtcl.Imain.pingW(prtcl.ping_tuple(time.perf_counter_ns()))
+            Bping = prtcl.Imain.pingW( prtcl.ping_tuple(print(int(time.time() * 1000))) )
             self.io.write(Bping)
 
         if item == 3:

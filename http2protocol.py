@@ -105,7 +105,7 @@ class http2protocol():
                         ruta.get("stop").encode("latin-1"),
                         estimatedTime, 
                         arrivalTime,
-                        1 if  res.get("current") == "true" else 0,
+                        2 if  res.get("current") == "true" else 0,
                         difference
                         )
                 
