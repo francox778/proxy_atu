@@ -80,7 +80,11 @@ class ConnectionThread(threading.Thread):
                     [packet_type,  packet_data]  = prtcl.Imain.factory_read(packet)
                     packet_type_choices = self.packet_type_choices.get(packet_type)
                     if packet_type_choices:
-                        packet_type_choices(packet_data)
+                        if packet_type != prtcl_h.packet_type.LOGIN.value:
+                            logger.error(f"NN not logged")  
+                            self.conexion_is_not_logged_handler(packet_data)  
+                        else:
+                            packet_type_choices(packet_data)
                     else:
                         logger.error(f"invalid packet type.")
                     if self.logged:
@@ -166,6 +170,13 @@ class ConnectionThread(threading.Thread):
         pass
 
     
+    def conexion_is_not_logged_handler(self):
+        Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
+                                        prtcl_h.response.ACK.value,
+                                        prtcl_h.error_codes.CONEXION_IS_NOT_LOGGED.value))
+        self.io.write(Bresponse)
+
+
     def login_handler(self, packet_data):
         # Validamos al usuario
         Tlogin = prtcl.login.read(packet_data)
@@ -189,8 +200,9 @@ class ConnectionThread(threading.Thread):
             Bauth = prtcl.Icontent.authW(Tauth)
             self.io.write(Bauth)
 
-            logger.info(f"{myfmt('login')}::{self.imei}  conexion Exitosa!")            
-        except (ValueError, THttpError, THttpAns) as e:
+            logger.info(f"{myfmt('login')}::{self.imei}  conexion Exitosa!")       
+        
+        except (ValueError, THttpError) as e:
             self.logged = False
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
@@ -263,7 +275,15 @@ class ConnectionThread(threading.Thread):
             Btarifa = prtcl.Icontent.tarifaW(Ttarifa)
             self.io.write(Btarifa)
             logger.debug(f"{myfmt('tarifa')}::{self.imei} consulta Exitosa!") 
-        except (ValueError, THttpError, THttpAns) as e:
+        except THttpAns as e:
+            self.end = True
+            Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
+                                                    prtcl_h.response.ACK.value,
+                                                    prtcl_h.error_codes.VUELVE_A_CONECTAR.value))
+            self.io.write(Bresponse)
+            logger.error(f"{myfmt('tarifa')}::{self.imei}  Vuelve a conectar! {e}") 
+        
+        except (ValueError, THttpError) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
                                                     prtcl_h.error_codes.TARIFA_ERROR.value))
@@ -283,6 +303,14 @@ class ConnectionThread(threading.Thread):
             Bhojaderuta = prtcl.Icontent.hoja_de_rutaW(Thojaderuta)
             self.io.write(Bhojaderuta)
             logger.debug(f"{myfmt('hoja')}::{self.imei} consulta Exitosa! {len(Thojaderuta)}") 
+        except THttpAns as e:
+            self.end = True
+            Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
+                                                    prtcl_h.response.ACK.value,
+                                                    prtcl_h.error_codes.VUELVE_A_CONECTAR.value))
+            self.io.write(Bresponse)
+            logger.error(f"{myfmt('hoja')}::{self.imei}  Vuelve a conectar! {e}")   
+
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
@@ -296,6 +324,13 @@ class ConnectionThread(threading.Thread):
             Bposiciones = prtcl.Icontent.posicionesW(Tposiciones)
             self.io.write(Bposiciones)
             logger.debug(f"{myfmt('pos')}::{self.imei} consulta Exitosa!") 
+        except THttpAns as e:
+            self.end = True
+            Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
+                                                    prtcl_h.response.ACK.value,
+                                                    prtcl_h.error_codes.VUELVE_A_CONECTAR.value))
+            self.io.write(Bresponse)
+            logger.error(f"{myfmt('hoja')}::{self.imei}  Vuelve a conectar! {e}")   
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
@@ -314,8 +349,14 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.error_codes.ALERTA_ENVIADA.value))
             self.io.write(Bresponse)
             logger.debug(f"{myfmt('alerta')}::{self.imei} envio Exitoso!") 
-            
-        except (ValueError, THttpError, THttpAns) as e:
+        except THttpAns as e:
+            self.end = True
+            Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
+                                                    prtcl_h.response.ACK.value,
+                                                    prtcl_h.error_codes.VUELVE_A_CONECTAR.value))
+            self.io.write(Bresponse)
+            logger.error(f"{myfmt('alerta')}::{self.imei}  Vuelve a conectar! {e}")     
+        except (ValueError, THttpError) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
                                                     prtcl_h.error_codes.ALERTA_NO_ENVIADA.value))
@@ -336,7 +377,15 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.error_codes.TICKETS_RECIBIDOS.value))
             self.io.write(Bresponse)
             logger.debug(f"{myfmt('tickets')}::{self.imei} tickets recibidos{len(Ttickets)}") 
-        except (ValueError, THttpError, THttpAns) as e:
+        except THttpAns as e:
+            self.end = True
+            Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
+                                                    prtcl_h.response.ACK.value,
+                                                    prtcl_h.error_codes.VUELVE_A_CONECTAR.value))
+            self.io.write(Bresponse)
+            logger.error(f"{myfmt('tickets')}::{self.imei}  Vuelve a conectar! {e}")     
+
+        except (ValueError, THttpError) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
                                                     prtcl_h.error_codes.TICKETS_RECIBIDOS_ERROR.value))

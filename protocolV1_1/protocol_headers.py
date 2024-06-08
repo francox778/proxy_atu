@@ -22,7 +22,7 @@ class error_codes(Enum):
 	ID_ERRONEO = 1
 	SERVICIO_NO_DISPONIBLE = 2
 	NOT_SPECIFIED = 3
-	VUELVE_A_CONECTAR  = 7
+	VUELVE_A_CONECTAR  = 7	# Esto sale cuando status es false.
 	IMEI_NO_REGISTRADO = 4
 	TICKETS_RECIBIDOS  = 5
 	TICKETS_RECIBIDOS_ERROR = 6
@@ -34,6 +34,8 @@ class error_codes(Enum):
 	HOJA_DE_RUTA_OK	   = 13
 	TARIFA_ERROR 	   = 14
 	TARIFA_OK		   = 15
+	CONEXION_IS_NOT_LOGGED = 16  # Simplemente enviara un login, con el supuesto token que tiene
+	
 
 class packet_type(Enum):
 	LOGIN = 0	  

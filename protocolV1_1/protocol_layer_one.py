@@ -11,7 +11,7 @@ import typing
 import protocolV1_1.protocol_headers as protocol_headers
 import protocolV1_1.protocol_layer_two_request as protocol_layer_two_request  
 import protocolV1_1.protocol_layer_two_content as protocol_layer_two_content
-from protocolV1_1.utils import trunc_1byte
+from protocolV1_1.utils import trunc_byte
 import echos
 
 class WrongType(Exception):
@@ -180,19 +180,19 @@ class Irequest():
 
     @staticmethod
     def tarifaW() -> bytearray:
-        return trunc_1byte(protocol_headers.packet_type.REQUEST.value) + trunc_1byte(protocol_headers.content_type.TARIFA.value) + protocol_layer_two_request.tarifa_request.write()
+        return trunc_byte(protocol_headers.packet_type.REQUEST.value, 1) + trunc_byte(protocol_headers.content_type.TARIFA.value, 1) + protocol_layer_two_request.tarifa_request.write()
 
     @staticmethod
     def hoja_de_rutaW() -> bytearray:
-        return trunc_1byte(protocol_headers.packet_type.REQUEST.value) +  trunc_1byte(protocol_headers.content_type.HOJA_DE_RUTA.value) + protocol_layer_two_request.hoja_de_ruta_request.write()
+        return trunc_byte(protocol_headers.packet_type.REQUEST.value, 1) +  trunc_byte(protocol_headers.content_type.HOJA_DE_RUTA.value, 1) + protocol_layer_two_request.hoja_de_ruta_request.write()
 
     @staticmethod
     def posicionesW() -> bytearray:
-        return trunc_1byte(protocol_headers.packet_type.REQUEST.value) + trunc_1byte(protocol_headers.content_type.POSICIONES.value) + protocol_layer_two_request.posiciones_request.write()
+        return trunc_byte(protocol_headers.packet_type.REQUEST.value, 1) + trunc_byte(protocol_headers.content_type.POSICIONES.value, 1) + protocol_layer_two_request.posiciones_request.write()
     
     @staticmethod
     def factory_write(type: protocol_headers.content_type, buff: bytearray):
-        return trunc_1byte(type) + buff
+        return trunc_byte(type, 1) + buff
 
  #  DATA  
  #  _________________________________________
@@ -222,8 +222,8 @@ class Icontent():
     @staticmethod
     def authW( data : protocol_layer_two_content.authentication_data_tuple)->bytearray:
         buff = protocol_layer_two_content.authentication_data.write(data)
-        return trunc_1byte(protocol_headers.packet_type.DATA.value) +\
-               trunc_1byte(protocol_headers.content_type.AUTHENTICATION.value) + buff
+        return trunc_byte(protocol_headers.packet_type.DATA.value, 1) +\
+               trunc_byte(protocol_headers.content_type.AUTHENTICATION.value, 1) + buff
 
     @staticmethod
     def authR( buff: bytearray) -> protocol_layer_two_content.authentication_data_tuple:
@@ -233,8 +233,8 @@ class Icontent():
     @staticmethod
     def tarifaW(data : protocol_layer_two_content.tarifa_data_tuple):
         buff = protocol_layer_two_content.tarifa_data.write(data)
-        return trunc_1byte(protocol_headers.packet_type.DATA.value) +\
-               trunc_1byte(protocol_headers.content_type.TARIFA.value) + buff
+        return trunc_byte(protocol_headers.packet_type.DATA.value, 1) +\
+               trunc_byte(protocol_headers.content_type.TARIFA.value, 1) + buff
 
     @staticmethod
     def tarifaR(buff : bytearray) -> protocol_layer_two_content.tarifa_data_tuple:
@@ -244,8 +244,8 @@ class Icontent():
     @staticmethod
     def hoja_de_rutaW(data : protocol_layer_two_content.hoja_de_ruta_data_tuple) -> bytearray:
         buff = protocol_layer_two_content.hoja_de_ruta_data.write(data)
-        return trunc_1byte(protocol_headers.packet_type.DATA.value) +\
-               trunc_1byte(protocol_headers.content_type.HOJA_DE_RUTA.value) + buff
+        return trunc_byte(protocol_headers.packet_type.DATA.value, 1) +\
+               trunc_byte(protocol_headers.content_type.HOJA_DE_RUTA.value, 1) + buff
 
 
     @staticmethod
@@ -262,7 +262,7 @@ class Icontent():
     @staticmethod
     def posicionesW(data : protocol_layer_two_content.posiciones_data_tuple)-> bytearray:
         buff = protocol_layer_two_content.posiciones_data.write(data)
-        return trunc_1byte(protocol_headers.packet_type.DATA.value) + trunc_1byte(protocol_headers.content_type.POSICIONES.value) + buff
+        return trunc_byte(protocol_headers.packet_type.DATA.value, 1) + trunc_byte(protocol_headers.content_type.POSICIONES.value, 1) + buff
 
 
     @staticmethod
@@ -273,8 +273,8 @@ class Icontent():
     @staticmethod
     def alertaW(data: protocol_layer_two_content.alerta_data_tuple) -> bytearray:
         buff = protocol_layer_two_content.alerta_data.write(data) 
-        return trunc_1byte(protocol_headers.packet_type.DATA.value) +\
-               trunc_1byte(protocol_headers.content_type.ALERTA.value) + buff
+        return trunc_byte(protocol_headers.packet_type.DATA.value, 1) +\
+               trunc_byte(protocol_headers.content_type.ALERTA.value, 1) + buff
                  
     
     @staticmethod
@@ -285,13 +285,13 @@ class Icontent():
     @staticmethod
     def ticketsW(data: "list[protocol_layer_two_content.tickets_data_tuple]") -> bytearray:
         buff = protocol_layer_two_content.tickets_data.write(data)
-        return trunc_1byte(protocol_headers.packet_type.DATA.value) +\
-               trunc_1byte(protocol_headers.content_type.TICKETS.value) + buff
+        return trunc_byte(protocol_headers.packet_type.DATA.value, 1) +\
+               trunc_byte(protocol_headers.content_type.TICKETS.value, 1) + buff
 
 
     @staticmethod
     def factory_write(type: protocol_headers.content_type, buff: bytearray):
-        return trunc_1byte(protocol_headers.packet_type.DATA.value) + trunc_1byte(type) + buff
+        return trunc_byte(protocol_headers.packet_type.DATA.value, 1) + trunc_byte(type, 1) + buff
         
     
 
@@ -323,7 +323,7 @@ class Imain():
     @staticmethod
     def responseW(data : response_tuple) -> bytearray:
         buff = response.write(data)
-        return trunc_1byte(protocol_headers.packet_type.RESPONSE.value) + buff
+        return trunc_byte(protocol_headers.packet_type.RESPONSE.value, 1) + buff
 
     @staticmethod
     def responseR( buff: bytearray ) -> response_tuple:
@@ -334,7 +334,7 @@ class Imain():
     @staticmethod
     def loginW( data: login_tuple) -> bytearray:
         Blogin = login.write(data)
-        return trunc_1byte(protocol_headers.packet_type.LOGIN.value) + Blogin
+        return trunc_byte(protocol_headers.packet_type.LOGIN.value, 1) + Blogin
 
     @staticmethod
     def loginR( buff: bytearray) -> login_tuple:
@@ -343,12 +343,12 @@ class Imain():
     
     @staticmethod
     def logoutW( ) -> bytearray:
-        return trunc_1byte(protocol_headers.packet_type.LOGOUT.value)
+        return trunc_byte(protocol_headers.packet_type.LOGOUT.value, 1)
 
     @staticmethod
     def pingW( data: ping_tuple) -> bytearray:
         Bping = ping.write(data)
-        return trunc_1byte(protocol_headers.packet_type.PING.value) + Bping
+        return trunc_byte(protocol_headers.packet_type.PING.value, 1) + Bping
 
     @staticmethod
     def pingR( buff: bytearray) -> ping_tuple :
@@ -357,7 +357,7 @@ class Imain():
 
     @staticmethod
     def factory_write(type: protocol_headers.packet_type, buff: bytearray):
-        return trunc_1byte(type) + buff
+        return trunc_byte(type, 1) + buff
     
 
 

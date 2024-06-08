@@ -27,6 +27,13 @@ logger = colored_logger.Logger("thttp", logging.DEBUG, cr.Fore.RED)
 logger.add_stderr(logging.ERROR)
 
 
+# si no hay token 
+# {
+#    "status": false,
+#    "msg": "custom"
+# }
+
+
 class THttpError(Exception):
     """cuando es diferente a 200.
     """

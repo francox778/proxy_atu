@@ -9,7 +9,7 @@ import typing
 import struct
 import protocolV1_1.protocol_headers as protocol_headers
 import echos
-
+import protocolV1_1.utils as utils
 
 
 class alerta_data_tuple(typing.NamedTuple):
@@ -97,7 +97,7 @@ class authentication_data():
         policy          = authentication.policy + bytearray([0])      
         company         = authentication.company + bytearray([0])   
         token           = authentication.token + bytearray([0])     
-        ticket_init     = struct.pack(f"{protocol_headers.ENDIANESS}Q", authentication.ticket_init)
+        ticket_init     = struct.pack(f"{protocol_headers.ENDIANESS}Q", utils.trunc_number(authentication.ticket_init,8))
         from_time       = struct.pack(f"{protocol_headers.ENDIANESS}I", authentication.from_time)
         to_time         = struct.pack(f"{protocol_headers.ENDIANESS}I", authentication.to_time)
         return name+lastname+doc_number+pattern_code+route_code+name_company+ logo+ruc+ruc_soat+policy+company+ token +ticket_init+from_time+to_time
@@ -286,8 +286,8 @@ class posiciones_data():
         ans = []
         idx = 1
         for _ in range(n_posiciones):
-            type = struct.unpack(f"{protocol_headers.ENDIANESS}h", posiciones[idx:idx+2])[0]
-            idx+=2
+            type = struct.unpack(f"{protocol_headers.ENDIANESS}B", posiciones[idx:idx+1])[0]
+            idx+=1
             plate_end = posiciones.find(0, idx)
             plate = posiciones[idx: plate_end]
             idx+= len(plate) + 1
@@ -300,7 +300,7 @@ class posiciones_data():
     def write(posiciones: "list[posiciones_data_tuple]"):
         buff = struct.pack(f"{protocol_headers.ENDIANESS}B", len(posiciones))
         for posicion in posiciones:
-            type  = struct.pack(f"{protocol_headers.ENDIANESS}h", posicion.type)
+            type  = struct.pack(f"{protocol_headers.ENDIANESS}B", posicion.type)
             plate = bytearray(posicion.plate) + bytearray([0])
             difference = struct.pack(f"{protocol_headers.ENDIANESS}h", posicion.difference)
             buff += type + plate + difference
