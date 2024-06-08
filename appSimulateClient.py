@@ -307,8 +307,8 @@ class ConnectionThread(threading.Thread):
 if __name__ == "__main__":
     q = queue.Queue()
     inputThread = InputThread(q)
-    connectionThread = ConnectionThread(ip='127.0.0.1', port=22222, q=q)
-    #connectionThread = ConnectionThread(ip='18.229.227.108', port=60001, q=q)
+    #connectionThread = ConnectionThread(ip='127.0.0.1', port=22222, q=q)
+    connectionThread = ConnectionThread(ip='18.229.227.108', port=60001, q=q)
     inputThread.start()
     connectionThread.start()
     inputThread.join()

@@ -28,10 +28,10 @@ posicionesBuff = [posicion0, posicion1, posicion2 ,posicion3, posicion4, posicio
 
 # complete(3) current(2) previous(1) next(0)
 paradero0 = content.hoja_de_ruta_data_tuple( b"CASABLANCA", 941, 938, 0,-2)
-paradero2 = content.hoja_de_ruta_data_tuple( b"5 MARISCAL", 941, 953, 0,-30)
+paradero1 = content.hoja_de_ruta_data_tuple( b"5 MARISCAL", 941, 953, 0,-30)
 paradero2 = content.hoja_de_ruta_data_tuple( b"INICIO(B)", 944, 941, 1,-30)
-paradero1 = content.hoja_de_ruta_data_tuple( b"MI BANCO BAYOVAR", 957, 0, 0,-30)
-paradero3 = content.hoja_de_ruta_data_tuple( b"JOSE C. MARIATEGUI", 941, 951, 0,-35)
+paradero3 = content.hoja_de_ruta_data_tuple( b"MI BANCO BAYOVAR", 957, 0, 0,-30)
+paradero4 = content.hoja_de_ruta_data_tuple( b"JOSE C. MARIATEGUI", 941, 951, 0,-35)
 
 #paraderos = prtcl.Icontent.hoja_de_rutaW([ paradero0, paradero1, paradero2, paradero3])
-paraderos = [ paradero0, paradero1, paradero2, paradero3]
+paraderos = [ paradero0, paradero1, paradero2, paradero3, paradero4]

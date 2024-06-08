@@ -194,7 +194,7 @@ class ConnectionThread(threading.Thread):
             self.logged = False
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
-                                                    prtcl_h.error_codes.OK.value))
+                                                    prtcl_h.error_codes.ID_ERRONEO.value))
             self.io.write(Bresponse)
             logger.error(f"{myfmt('login')}::{self.imei}  Error de conexion! {e}") 
         
