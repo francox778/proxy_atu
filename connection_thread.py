@@ -202,7 +202,7 @@ class ConnectionThread(threading.Thread):
 
             logger.info(f"{myfmt('login')}::{self.imei}  conexion Exitosa!")       
         
-        except (ValueError, THttpError) as e:
+        except (ValueError, THttpError, THttpAns) as e:
             self.logged = False
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
