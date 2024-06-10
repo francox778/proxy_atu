@@ -96,7 +96,6 @@ class ThttpRequests():
             raise THttpError(f"Error http {code}")
         if r.json().get("status") == False:
             raise THttpAns(f"Error {r.json()}") 
-        r = None
         FAKE = App.config().getboolean(section="FAKEDATA", option="POSICIONES_FAKE")
         if FAKE:
             r = fake_data.posicionesBuff
@@ -112,7 +111,6 @@ class ThttpRequests():
             raise THttpError(f"Error http {code}")
         if r.json().get("status") == False:
             raise THttpAns(f"Error {r.json()}") 
-        r = None
         FAKE = App.config().getboolean(section="FAKEDATA", option="HOJA_DE_RUTA_FAKE")
         if FAKE:
             r = fake_data.paraderos
