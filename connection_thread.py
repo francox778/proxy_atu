@@ -76,7 +76,7 @@ class ConnectionThread(threading.Thread):
                 except io.ValidMessageException:
                     self.timeoutCnt = 0
                     packet = self.io.getPacket()
-                    logger.debug(f" {echos.bytearray2str(packet)}")
+                    #logger.debug(f" {echos.bytearray2str(packet)}")
                     [packet_type,  packet_data]  = prtcl.Imain.factory_read(packet)
                     packet_type_choices = self.packet_type_choices.get(packet_type)
                     if packet_type_choices:
@@ -97,17 +97,20 @@ class ConnectionThread(threading.Thread):
                     if self.timeoutCnt == 10:
                         logger.info(f"{myfmt('timeout1')}::{self.imei}  conexion inactiva {self.timeoutCnt}x{timeout}seg")
                         raise io.ClosedSocketException
+                except BrokenPipeError as e:
+                    logger.error(f"NN BrokenPipeError.")
+                    raise
                 except io.ClosedSocketException as e:
-                    #logger.error(f"{self.imei} Conexion cerrada!")
+                    #logger.error(f"NN Conexion cerrada!")
                     raise 
                 except (socket.timeout, socket.gaierror) as err:
-                    #logger.error(f"{self.imei} timeout Conexion cerrada!")
+                    #logger.error(f"NN timeout Conexion cerrada!")
                     raise
                 except KeyboardInterrupt:
                     raise
 
                 except Exception as e:
-                    logger.error(f"{self.imei} {e}", exc_info=True)
+                    logger.error(f"NN {e}", exc_info=True)
                 finally:
                     pass
             
@@ -119,7 +122,7 @@ class ConnectionThread(threading.Thread):
                 except io.ValidMessageException:
                     self.timeoutCnt = 0
                     packet = self.io.getPacket()
-                    logger.debug(f"{self.imei} {echos.bytearray2str(packet)}")
+                    #logger.debug(f"{self.imei} {echos.bytearray2str(packet)}")
                     [packet_type,  packet_data]  = prtcl.Imain.factory_read(packet)
                     packet_type_choices = self.packet_type_choices.get(packet_type)
                     if packet_type_choices:
@@ -137,6 +140,9 @@ class ConnectionThread(threading.Thread):
                         logger.info(f"{myfmt('timeout2')}::{self.imei}  conexion inactiva {self.timeoutCnt}x{timeout}seg")
                         raise io.ClosedSocketException
                     pass
+                except BrokenPipeError as e:
+                    logger.error(f"{self.imei} BrokenPipeError.")
+                    raise
                 except io.ClosedSocketException as e:
                     #logger.error(f"{self.imei} Conexion cerrada!")
                     raise
@@ -180,7 +186,7 @@ class ConnectionThread(threading.Thread):
     def login_handler(self, packet_data):
         # Validamos al usuario
         Tlogin = prtcl.login.read(packet_data)
-        logger.info(f"{myfmt('login')}:: intento de conexion : imei: {Tlogin}")
+        logger.info(f"{myfmt('login')}:: intento de conexion : {Tlogin}")
         self.imei = str(Tlogin.imei)
         self.token = Tlogin.token
         
