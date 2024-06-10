@@ -170,7 +170,7 @@ class ConnectionThread(threading.Thread):
         pass
 
     
-    def conexion_is_not_logged_handler(self):
+    def conexion_is_not_logged_handler(self, packet_data):
         Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                         prtcl_h.response.ACK.value,
                                         prtcl_h.error_codes.CONEXION_IS_NOT_LOGGED.value))
