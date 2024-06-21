@@ -54,7 +54,7 @@ class IDb(psql_interface.Postgresql):
         try:
             self.insert(f'''CREATE TABLE {self.registro} (
                         imei BIGINT PRIMARY KEY,
-                        last_connection DATE
+                        last_connection TIMESTAMP
                     )''')
             if clean:
                 self.sqlite.insert(f'DELETE FROM {self.registro};')
@@ -84,7 +84,7 @@ class IDb(psql_interface.Postgresql):
                     imei BIGINT,
                     bytes BIGINT,
                     counter BIGINT,
-                    last_update DATE,
+                    last_update TIMESTAMP,
                     FOREIGN KEY (imei) REFERENCES {registro}(imei)
                     )''')
             if clean:
@@ -137,9 +137,9 @@ class IDb(psql_interface.Postgresql):
         now = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
         row = self.read(f'SELECT * FROM {filename} WHERE imei = %s and date = %s', imei, now_only_date)
         if row:
-            cbytes = row[0][2] + nbytes
-            counter = row[0][3] + 1
-            self.insert(f'UPDATE {filename} SET bytes = %s, counter = %s, last_update = %s WHERE date = %s', cbytes, counter, now, now_only_date)
+            cbytes = row[0][3] + nbytes
+            counter = row[0][4] + 1
+            self.insert(f'UPDATE {filename} SET bytes = %s, counter = %s, last_update = %s WHERE date = %s AND imei = %s', cbytes, counter, now, now_only_date, imei)
         else:
             cbytes = nbytes
             counter = 1             
