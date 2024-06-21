@@ -369,7 +369,11 @@ class Imain():
 
 if __name__ == "__main__":
     buf = login.write(login_tuple(ver=1, imei=866989058568582, pattern_code=b"4053", token=b""))
-    
     print(echos.bytearray2str(buf))
     buf = login.read(buf)
     print(buf)
+
+    Bresponse = Imain.responseW(response_tuple(
+                                protocol_headers.response.ACK.value,
+                                protocol_headers.error_codes.ID_ERRONEO.value))
+    print(f"Bresponse {len(Bresponse)}")

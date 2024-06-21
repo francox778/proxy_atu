@@ -2,3 +2,4 @@ borrar*
 borrar_utils/*
 venv/
 logs/
+dbsqlite/stats.db

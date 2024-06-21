@@ -12,10 +12,12 @@ logger = colored_logger.Logger("acc_thr", logging.DEBUG, cr.Fore.GREEN)
 logger.add_stderr(logging.ERROR)
 
 class AcceptorThread(threading.Thread):
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, enable_posicion, dbCredentials):
         super().__init__()
         self.ip = ip
         self.port = port
+        self.dbCredentials = dbCredentials
+        self.enable_posicion = enable_posicion
 
     def run(self):
         logger.info("iniciado")
@@ -29,7 +31,7 @@ class AcceptorThread(threading.Thread):
                 logger.debug(f"nueva conexion {addr}")
                 conn.settimeout(100)
                 conn.setblocking(False)
-                connection = connection_thread.ConnectionThread(conn, addr)
+                connection = connection_thread.ConnectionThread(conn, addr, self.enable_posicion, self.dbCredentials)
                 connection.start()
         except KeyboardInterrupt:
             raise

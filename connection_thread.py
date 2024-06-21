@@ -1,7 +1,7 @@
 
 import threading
 import socket
-
+import time
 
 import protocolV1_1.protocol_io as io
 import protocolV1_1.protocol_layer_one as prtcl
@@ -13,6 +13,9 @@ from translator_atu_http import ThttpRequests as thttp
 from translator_atu_http import THttpAns, THttpError
 import atuHttp
 import echos
+import dbsqlite.db_interface as db
+
+
 
 import colored_logger
 import logging
@@ -27,7 +30,7 @@ def myfmt(log: str) -> str:
 
 
 class ConnectionThread(threading.Thread):
-    def __init__(self, sock, addr):
+    def __init__(self, sock, addr, enable_posicion,dbCredentials):
         super().__init__()
         self.logged = False
         self.end = False
@@ -39,6 +42,14 @@ class ConnectionThread(threading.Thread):
         self.imei = "NN" #nomen nescio
         self.http = atuHttp.AtuHttp("https://billingws.gpstracking.pe/v1/api/")
         self.timeoutCnt = 0
+
+        # Only for evaluate_posiciones
+        self.posiciones_timer = time.perf_counter()
+        self.posiciones_timeout = 15 # 100
+        self.enable_posicion = enable_posicion 
+        # db
+        self.db = db.IDb(**dbCredentials)
+
 
         self.packet_type_choices = {
             prtcl_h.packet_type.LOGIN.value      : self.login_handler ,
@@ -88,12 +99,13 @@ class ConnectionThread(threading.Thread):
                     else:
                         logger.error(f"invalid packet type.")
                     if self.logged:
+                        self.db.update_row_registro(self.imei)
                         break
                 except prtcl.WrongType:
                     logger.error(f"NN packet type invalido")       
                 except io.TimeOutException:
                     self.timeoutCnt = self.timeoutCnt + 1
-                    logger.info(f"{myfmt('timeout1')}::{self.imei} timeout1 {timeout}s n:{self.timeoutCnt}x{timeout}seg")
+                    logger.debug(f"{myfmt('timeout1')}::{self.imei} timeout1 {timeout}s n:{self.timeoutCnt}x{timeout}seg")
                     if self.timeoutCnt == 10:
                         logger.info(f"{myfmt('timeout1')}::{self.imei} conexion inactiva {self.timeoutCnt}x{timeout}seg")
                         raise io.ClosedSocketException
@@ -115,7 +127,7 @@ class ConnectionThread(threading.Thread):
                     pass
             
             # Sesion Activa
-            timeout = 10
+            timeout = 5
             while True:
                 try:
                     self.io.readBlocking(timeout)
@@ -132,14 +144,17 @@ class ConnectionThread(threading.Thread):
                     if not self.logged:
                         break    
                     if self.end:
-                        raise io.ClosedSocketException       
+                        raise io.ClosedSocketException   
+                    self.evaluate_posiciones()
+
                 except io.TimeOutException:
                     self.timeoutCnt = self.timeoutCnt + 1
-                    logger.info(f"{myfmt('timeout2')}::{self.imei} {timeout}s n:{self.timeoutCnt}x{timeout}seg")
-                    if self.timeoutCnt == 10:
+                    logger.debug(f"{myfmt('timeout2')}::{self.imei} {timeout}s n:{self.timeoutCnt}x{timeout}seg")
+                    if self.timeoutCnt == 300:
                         logger.info(f"{myfmt('timeout2')}::{self.imei} conexion inactiva {self.timeoutCnt}x{timeout}seg")
                         raise io.ClosedSocketException
-                    pass
+                    self.evaluate_posiciones()
+
                 except BrokenPipeError as e:
                     logger.error(f"{self.imei} BrokenPipeError.")
                     raise
@@ -165,9 +180,26 @@ class ConnectionThread(threading.Thread):
         finally:
             self.sock.close()
             logger.info(f"{self.imei}::conexion_cerrada") 
+            self.db.close()
             #logger.debug(f"{self.imei} conexion_cerrada")
 
-
+    def evaluate_posiciones(self):
+        if not self.enable_posicion:
+            return
+        if time.perf_counter() - self.posiciones_timer > self.posiciones_timeout:
+            Tposiciones = thttp.posiciones(self.http) 
+            if len(Tposiciones) > 0:
+                self.posiciones_timer = time.perf_counter()
+                self.posiciones_timeout = 15
+                logger.info(f"{myfmt('pos_detec')}::{self.imei} posiciones activo {len(Tposiciones)}!!")
+                Bposiciones = prtcl.Icontent.posicionesW(Tposiciones)
+                self.io.write(Bposiciones) 
+                self.db.update_row_posiciones(self.imei, len(Bposiciones))
+            else:
+                self.posiciones_timer = time.perf_counter()
+                self.posiciones_timeout = 100
+                logger.info(f"{myfmt('pos_detec')}::{self.imei} posiciones inactivo!!")
+    
 
     def waiting_login(self):
         pass
@@ -189,7 +221,6 @@ class ConnectionThread(threading.Thread):
         logger.info(f"{myfmt('login')}:: intento de conexion : {Tlogin}")
         self.imei = str(Tlogin.imei)
         self.token = Tlogin.token
-        
         # Enviamos authenticate o NACK
         if len(Tlogin.token) > 0:
             Bdata = prtcl.Imain.responseW(prtcl.response_tuple(
@@ -199,15 +230,16 @@ class ConnectionThread(threading.Thread):
             self.io.write(Bdata)
             logger.info(f"{myfmt('login')}:: Usuario ya cuenta con un token, conexion automatica")
             self.http.setToken(self.token.decode('latin-1'))
+            self.db.update_row_login(self.imei, len(packet_data) + len(Bdata) + 2) # 5 ans
             return
         try:
             Tauth = thttp.login(self.http, Tlogin)
             self.logged = True
             Bauth = prtcl.Icontent.authW(Tauth)
             self.io.write(Bauth)
-
             logger.info(f"{myfmt('login')}::{self.imei} conexion Exitosa!")       
-        
+            self.db.update_row_login(self.imei, len(packet_data) + len(Bauth) + 2)
+
         except (ValueError, THttpError, THttpAns) as e:
             self.logged = False
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
@@ -215,45 +247,51 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.error_codes.ID_ERRONEO.value))
             self.io.write(Bresponse)
             logger.error(f"{myfmt('login')}::{self.imei} Error de conexion! {e}") 
-        
+            self.db.update_row_response(self.imei, len(Bresponse) + 2)
 
     def logout_handler(self, packet_data):
         # Enviamos ACK
+        self.db.update_row_logout(self.imei, len(packet_data) + 2) # 5 ans
         self.logged = False
         Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
                                                     prtcl_h.error_codes.OK.value))
         self.io.write(Bresponse)
         self.end = True
-        logger.debug(f"{myfmt('logout')}::{self.imei} recibido!")
+        logger.info(f"{myfmt('logout')}::{self.imei} recibido!")
 
 
     def ping_handler(self, packet_data):
         try:
             # Enviamos ACK
+            
             Tping = prtcl.Imain.pingR(packet_data)
             Bping = prtcl.Imain.pingW(Tping)
             self.io.write(Bping)
-            logger.debug(f"{myfmt('ping')}::{self.imei} {Tping.timens}ms consulta Exitosa!")
+            logger.info(f"{myfmt('ping')}::{self.imei} {Tping.timens}ms consulta Exitosa!")
+            self.db.update_row_ping(self.imei, len(packet_data)+ len(Bping) + 2) # 5 ans
         except ValueError as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
                                                     prtcl_h.error_codes.OK.value))
             self.io.write(Bresponse)
-            logger.debug(f"{myfmt('ping')}::{self.imei} ERROR {e}")
+            logger.info(f"{myfmt('ping')}::{self.imei} ERROR {e}")
+            self.db.update_row_response(self.imei, len(Bresponse) + 2)
 
     def cmd_handler(self, packet_data):
         pass
 
     def response_handler(self, packet_data):
+        self.db.update_row_response(self.imei, len(packet_data))
         try:
+            self.db.update_row_response(self.imei, 5)
             Tresponse = prtcl.Imain.responseR(packet_data)
             if Tresponse.ack == prtcl_h.response.ACK.value:
-                logger.debug(f"{myfmt('response')}::{self.imei}, ACK, ec: {Tresponse.ec}")
+                logger.info(f"{myfmt('response')}::{self.imei}, ACK, ec: {Tresponse.ec}")
             else:
-                logger.debug(f"{myfmt('response')}::{self.imei}, NACK, ec: {Tresponse.ec}")
+                logger.info(f"{myfmt('response')}::{self.imei}, NACK, ec: {Tresponse.ec}")
         except ValueError as e:
-            logger.debug(f"{myfmt('response')}::{self.imei}, {e}")
+            logger.error(f"{myfmt('response')}::{self.imei}, {e}")
 
     def request_handler(self, packet_data):
         [type, data] = prtcl.Irequest.factory_read(packet_data)
@@ -280,21 +318,23 @@ class ConnectionThread(threading.Thread):
             Ttarifa = thttp.tarifa(self.http)
             Btarifa = prtcl.Icontent.tarifaW(Ttarifa)
             self.io.write(Btarifa)
-            logger.debug(f"{myfmt('tarifa')}::{self.imei} consulta Exitosa!") 
+            logger.info(f"{myfmt('tarifa')}::{self.imei} consulta Exitosa!") 
+            self.db.update_row_tarifa(self.imei,  len(Btarifa) + 4)
         except THttpAns as e:
             self.end = True
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
                                                     prtcl_h.error_codes.VUELVE_A_CONECTAR.value))
             self.io.write(Bresponse)
-            logger.error(f"{myfmt('tarifa')}::{self.imei} Vuelve a conectar! {e}") 
-        
+            logger.info(f"{myfmt('tarifa')}::{self.imei} Vuelve a conectar! {e}") 
+            self.db.update_row_response(self.imei, len(Bresponse) + 4)
         except (ValueError, THttpError) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
                                                     prtcl_h.error_codes.TARIFA_ERROR.value))
             self.io.write(Bresponse)
             logger.error(f"{myfmt('tarifa')}::{self.imei} {e}") 
+            self.db.update_row_response(self.imei, len(Bresponse) + 4)
 
 
 
@@ -308,7 +348,8 @@ class ConnectionThread(threading.Thread):
             Thojaderuta = thttp.hoja_de_ruta(self.http)
             Bhojaderuta = prtcl.Icontent.hoja_de_rutaW(Thojaderuta)
             self.io.write(Bhojaderuta)
-            logger.debug(f"{myfmt('hoja')}::{self.imei} consulta Exitosa! {len(Thojaderuta)}") 
+            logger.info(f"{myfmt('hoja')}::{self.imei} consulta Exitosa! {len(Thojaderuta)}") 
+            self.db.update_row_hoja_de_ruta(self.imei, len(Bhojaderuta) + 2)
         except THttpAns as e:
             self.end = True
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
@@ -316,6 +357,7 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.error_codes.VUELVE_A_CONECTAR.value))
             self.io.write(Bresponse)
             logger.error(f"{myfmt('hoja')}::{self.imei} Vuelve a conectar! {e}")   
+            self.db.update_row_response(self.imei, len(Bresponse) + 4)
 
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
@@ -323,30 +365,34 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.error_codes.HOJA_DE_RUTA_ERROR.value))
             self.io.write(Bresponse)
             logger.error(f"{myfmt('hoja')}::{self.imei} {e}") 
+            self.db.update_row_response(self.imei, len(Bresponse) + 4)
 
     def posiciones_req_handler(self, data):
         try:
             Tposiciones = thttp.posiciones(self.http)
             Bposiciones = prtcl.Icontent.posicionesW(Tposiciones)
             self.io.write(Bposiciones)
-            logger.debug(f"{myfmt('pos')}::{self.imei} consulta Exitosa!") 
+            logger.info(f"{myfmt('pos')}::{self.imei} consulta Exitosa!") 
+            self.db.update_row_posiciones(self.imei, len(Bposiciones) + 4)
         except THttpAns as e:
             self.end = True
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
                                                     prtcl_h.error_codes.VUELVE_A_CONECTAR.value))
             self.io.write(Bresponse)
-            logger.error(f"{myfmt('hoja')}::{self.imei} Vuelve a conectar! {e}")   
+            logger.error(f"{myfmt('hoja')}::{self.imei} Vuelve a conectar! {e}")  
+            self.db.update_row_response(self.imei, len(Bresponse) + 4)
         except (ValueError, THttpError, THttpAns) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
                                                     prtcl_h.error_codes.POSICIONES_ERROR.value))
             self.io.write(Bresponse)
             logger.error(f"{myfmt('pos')}::{self.imei} {e}") 
-
+            self.db.update_row_response(self.imei, len(Bresponse) + 4)
 
 #######################################  CONTENT  #####################################################
     def alerta_content_handler(self, data):  # si hay
+        self.db.update_row_alerta(self.imei, len(data) + 2)
         try:
             Talerta = prtcl.Icontent.alertaR(data)
             http_code = thttp.alerta(self.http, Talerta)
@@ -354,27 +400,30 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.response.ACK.value,
                                                     prtcl_h.error_codes.ALERTA_ENVIADA.value))
             self.io.write(Bresponse)
-            logger.debug(f"{myfmt('alerta')}::{self.imei} envio Exitoso!") 
+            logger.info(f"{myfmt('alerta')}::{self.imei} envio Exitoso!") 
+            self.db.update_row_response(self.imei, len(Bresponse) + 2)
         except THttpAns as e:
             self.end = True
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.ACK.value,
                                                     prtcl_h.error_codes.VUELVE_A_CONECTAR.value))
             self.io.write(Bresponse)
-            logger.error(f"{myfmt('alerta')}::{self.imei} Vuelve a conectar! {e}")     
+            logger.info(f"{myfmt('alerta')}::{self.imei} Vuelve a conectar! {e}")    
+            self.db.update_row_response(self.imei, len(Bresponse) + 2) 
         except (ValueError, THttpError) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
                                                     prtcl_h.error_codes.ALERTA_NO_ENVIADA.value))
             self.io.write(Bresponse)
             logger.error(f"{myfmt('alerta')}::{self.imei} {e}")  
-
+            self.db.update_row_response(self.imei, len(Bresponse) + 2) 
 
     def tarifa_content_handler(self, data): 
         # no hay 
         pass
 
     def tickets_content_handler(self, data): # si hay
+        self.db.update_row_tickets(self.imei, len(data) + 2) 
         try:
             Ttickets = prtcl.Icontent.ticketsR(data)
             http_code = thttp.tickets(self.http ,Ttickets)
@@ -382,7 +431,8 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.response.ACK.value,
                                                     prtcl_h.error_codes.TICKETS_RECIBIDOS.value))
             self.io.write(Bresponse)
-            logger.debug(f"{myfmt('tickets')}::{self.imei} tickets recibidos{len(Ttickets)}") 
+            logger.info(f"{myfmt('tickets')}::{self.imei} tickets recibidos {len(Ttickets)}") 
+            self.db.update_row_response(self.imei, len(Bresponse) + 2)
         except THttpAns as e:
             self.end = True
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
@@ -390,13 +440,14 @@ class ConnectionThread(threading.Thread):
                                                     prtcl_h.error_codes.VUELVE_A_CONECTAR.value))
             self.io.write(Bresponse)
             logger.error(f"{myfmt('tickets')}::{self.imei} Vuelve a conectar! {e}")     
-
+            self.db.update_row_response(self.imei, len(Bresponse) + 2)
         except (ValueError, THttpError) as e:
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
                                                     prtcl_h.response.NACK.value,
                                                     prtcl_h.error_codes.TICKETS_RECIBIDOS_ERROR.value))
             self.io.write(data)
             logger.error(f"{myfmt('tickets')}::{self.imei} {e}")  
+            self.db.update_row_response(self.imei, len(Bresponse) + 2)
 
     def hoja_de_ruta_content_handler(self, data):
         # no hay

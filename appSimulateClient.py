@@ -91,7 +91,7 @@ class ConnectionThread(threading.Thread):
             self.io = io.packet_reader(s)
             while True:
                 Tlogin = prtcl.login_tuple(ver = 1,
-                                          imei = 866989058568582,
+                                          imei = 866989058524023,
                                           pattern_code = b"4053",
                                           token = b"")
                 Blogin = prtcl.Imain.loginW(Tlogin)
@@ -287,10 +287,10 @@ class ConnectionThread(threading.Thread):
             self.io.write(Btarifa)
 
         if item == 5:
-            ticket0 = content.tickets_data_tuple(1, 5, 10000000001, 654646546)
-            ticket1 = content.tickets_data_tuple(1, 6, 10000000002, 654646547)
-            ticket2 = content.tickets_data_tuple(1, 8, 10000000003, 654646548)
-            ticket3 = content.tickets_data_tuple(1, 9, 10000000004, 654646549)
+            ticket0 = content.tickets_data_tuple(1, 5, 00000000000, 654646546)
+            ticket1 = content.tickets_data_tuple(1, 6, 1, 654646547)
+            ticket2 = content.tickets_data_tuple(1, 8, 2, 654646548)
+            ticket3 = content.tickets_data_tuple(1, 9, 3, 654646549)
             tickets =[ ticket0, ticket1, ticket2, ticket3]
             Btickets = prtcl.Icontent.ticketsW(tickets)
             self.io.write(Btickets)

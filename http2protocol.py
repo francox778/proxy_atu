@@ -136,8 +136,10 @@ class http2protocol():
                     posType = 1
                 else:   #before
                     posType = 2
-                
-                difference = int(posicion.get("difference")) if posicion.get("difference") else 0
+                diff:str = posicion.get("difference")
+                if diff.startswith("+-"):
+                    diff = diff.replace("-","")
+                difference = int(diff) if diff else 0
                 t  = posiciones_data_tuple(
                         posType,
                         posicion.get("stop").encode("latin-1") if  posType == 1 else posicion.get("plate").encode("latin-1"), 
