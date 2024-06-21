@@ -53,24 +53,22 @@ class Postgresql():
             raise err
 
         
-    def insert(self, cmd, *args, conn = None):
+    def insert(self, cmd, *args):
         try:
-            connection =  conn if conn else self.pool.getconn()
+            connection = self.pool.getconn()
             cursor = connection.cursor()
             cursor.execute(cmd, args)
             connection.commit()
         except psycopg2.Error as err:
-            self.pool.putconn(connection)
             logger.error("fail insert %s -> %s", cmd, err)
             raise err
         finally:
             cursor.close()  
-            if not conn:
-                self.pool.putconn(connection)
+            self.pool.putconn(connection)
     
-    def read(self, cmd, *args, conn = None): 
+    def read(self, cmd, *args): 
         try:
-            connection =  conn if conn else self.pool.getconn()
+            connection = self.pool.getconn()
             cursor = connection.cursor()
             cursor.execute(cmd, args)
             return cursor.fetchall()
@@ -79,8 +77,7 @@ class Postgresql():
             raise err 
         finally:
             cursor.close()
-            if not conn:
-                self.pool.putconn(connection)
+            self.pool.putconn(connection)
 
     @contextmanager
     def ctx(self): 
