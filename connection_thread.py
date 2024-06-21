@@ -101,7 +101,6 @@ class ConnectionThread(threading.Thread):
                     else:
                         logger.error(f"invalid packet type.")
                     if self.logged:
-                        self.db.update_row_registro(self.imei)
                         break
                 except prtcl.WrongType:
                     logger.error(f"NN packet type invalido")       
@@ -222,6 +221,7 @@ class ConnectionThread(threading.Thread):
         logger.info(f"{myfmt('login')}:: intento de conexion : {Tlogin}")
         self.imei = str(Tlogin.imei)
         self.token = Tlogin.token
+        self.db.update_row_registro(self.imei)
         # Enviamos authenticate o NACK
         if len(Tlogin.token) > 0:
             Bdata = prtcl.Imain.responseW(prtcl.response_tuple(
