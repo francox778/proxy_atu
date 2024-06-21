@@ -79,7 +79,8 @@ class IDb(psql_interface.Postgresql):
             return
         try:
             self.insert(f'''CREATE TABLE {table_name} (
-                    date DATE PRIMARY KEY,
+                    id BIGSERIAL PRIMARY KEY,
+                    date DATE,
                     imei BIGINT,
                     bytes BIGINT,
                     counter BIGINT,
