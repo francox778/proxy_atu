@@ -130,31 +130,29 @@ class IDb(psql_interface.Postgresql):
     # todas las conexiones son en tiempo real asi que aqui pondre lo normal.
     @enable_decorator
     def update_row(self, imei:int, nbytes: int, filename: str):
-        with self.ctx() as conn:
-            now = datetime.datetime.now()
-            now_only_date = now.strftime('%Y-%m-%dT00:00:00')
-            now = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-            row = self.read(f'SELECT * FROM {filename} WHERE imei = %s and date = %s', imei, now_only_date, conn=conn)
-            if row:
-                cbytes = row[0][2] + nbytes
-                counter = row[0][3] + 1
-                self.insert(f'UPDATE {filename} SET bytes = %s, counter = %s, last_update = %s WHERE date = %s', cbytes, counter, now, now_only_date, conn=conn)
-            else:
-                cbytes = nbytes
-                counter = 1
-                
-                self.insert(f'INSERT INTO {filename} (date, imei, bytes, counter, last_update) VALUES (%s, %s, %s, %s, %s)', now_only_date, imei, cbytes, counter, now,conn=conn)
+
+        now = datetime.datetime.now()
+        now_only_date = now.strftime('%Y-%m-%dT00:00:00')
+        now = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        row = self.read(f'SELECT * FROM {filename} WHERE imei = %s and date = %s', imei, now_only_date)
+        if row:
+            cbytes = row[0][2] + nbytes
+            counter = row[0][3] + 1
+            self.insert(f'UPDATE {filename} SET bytes = %s, counter = %s, last_update = %s WHERE date = %s', cbytes, counter, now, now_only_date)
+        else:
+            cbytes = nbytes
+            counter = 1             
+            self.insert(f'INSERT INTO {filename} (date, imei, bytes, counter, last_update) VALUES (%s, %s, %s, %s, %s)', now_only_date, imei, cbytes, counter, now)
 
     @enable_decorator
     def update_row_registro(self, imei:int):
-        with self.ctx() as conn:
-            now = datetime.datetime.now()
-            now = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-            row = self.read(f'SELECT * FROM {self.registro} WHERE imei = %s', imei, conn=conn)
-            if row:
-                self.insert(f'UPDATE {self.registro} SET last_connection = %s WHERE imei= %s', now, imei)
-            else:
-                self.insert(f'INSERT INTO {self.registro} (imei, last_connection) VALUES (%s, %s)', imei, now, conn=conn)
+        now = datetime.datetime.now()
+        now = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        row = self.read(f'SELECT * FROM {self.registro} WHERE imei = %s', imei)
+        if row:
+            self.insert(f'UPDATE {self.registro} SET last_connection = %s WHERE imei= %s', now, imei)
+        else:
+            self.insert(f'INSERT INTO {self.registro} (imei, last_connection) VALUES (%s, %s)', imei, now)
 
     @enable_decorator
     def update_row_posiciones(self, imei:int, nbytes: int):
