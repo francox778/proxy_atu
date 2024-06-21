@@ -13,7 +13,9 @@ from translator_atu_http import ThttpRequests as thttp
 from translator_atu_http import THttpAns, THttpError
 import atuHttp
 import echos
-import dbsqlite.db_interface as db
+
+import db.db_interface as db
+
 
 
 
@@ -21,7 +23,7 @@ import colored_logger
 import logging
 import colorama as cr
 
-logger = colored_logger.Logger("conn_thr", logging.DEBUG, cr.Fore.CYAN)
+logger = colored_logger.Logger("conn_thr", logging.INFO, cr.Fore.CYAN)
 logger.add_stderr(logging.ERROR)
 
 H_TXT_LEN = 8
@@ -30,7 +32,7 @@ def myfmt(log: str) -> str:
 
 
 class ConnectionThread(threading.Thread):
-    def __init__(self, sock, addr, enable_posicion,dbCredentials):
+    def __init__(self, sock, addr, enable_posicion):
         super().__init__()
         self.logged = False
         self.end = False
@@ -48,7 +50,7 @@ class ConnectionThread(threading.Thread):
         self.posiciones_timeout = 15 # 100
         self.enable_posicion = enable_posicion 
         # db
-        self.db = db.IDb(**dbCredentials)
+        self.db = db.globalDb
 
 
         self.packet_type_choices = {
@@ -180,7 +182,6 @@ class ConnectionThread(threading.Thread):
         finally:
             self.sock.close()
             logger.info(f"{self.imei}::conexion_cerrada") 
-            self.db.close()
             #logger.debug(f"{self.imei} conexion_cerrada")
 
     def evaluate_posiciones(self):
