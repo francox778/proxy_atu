@@ -266,8 +266,8 @@ class ConnectionThread(threading.Thread):
             6: req hoja de ruta
             7: req posiciones                                               
         """
-        if item == 0:
-            Blogin = prtcl.Imain.loginW( prtcl.login_tuple(ver = 1, imei = 866989058568582, pattern_code = b"4053", token = b""))
+        if item == 0: #866989058568582
+            Blogin = prtcl.Imain.loginW( prtcl.login_tuple(ver = 1, imei = 866989058567402 , pattern_code = b"4053", token = b""))
             self.io.write(Blogin)
 
         if item == 1:

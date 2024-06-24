@@ -7,7 +7,9 @@ if ruta_proyecto not in sys.path:
 
 import fake_data
 
-
+import http.client
+import requests
+import urllib3
 from CONFIG import App
 from protocol2http import protocol2http
 from http2protocol import http2protocol
@@ -48,88 +50,126 @@ class THttpToken(Exception):
     """cuando el problema esta relacionado al toke"""
     pass
 
+
+
+
+
 class ThttpRequests():
     @staticmethod
     def login(http: atuHttp.AtuHttp, data: login_tuple) :
-        d = protocol2http.login(data)
-        r = http.login(**d)
-        code  = r.status_code
-        if code != 200:
-            raise THttpError(f"Error http {code}")
+        try:
+            d = protocol2http.login(data)
+            r = http.login(**d)
+            code  = r.status_code
+            if code != 200:
+                raise THttpError(f"Error http {code}")
 
-        if r.json().get("status") == False:
-            raise THttpAns(f"Error {r.json()}")    
-        
-        http.setToken(r.json().get("data").get("token"))
-        result = http2protocol.auth(r.json())
-        return result
-    
+            if r.json().get("status") == False:
+                raise THttpAns(f"Error {r.json()}")    
+            
+            http.setToken(r.json().get("data").get("token"))
+            result = http2protocol.auth(r.json())
+            return result
+        except (requests.exceptions.RequestException, 
+                urllib3.exceptions.ProtocolError,
+                requests.exceptions.ConnectionError,
+                http.client.RemoteDisconnected) as e:
+            raise THttpError(f"Error {e}")
+
     @staticmethod
     def alerta(http: atuHttp.AtuHttp, alerta: alerta_data_tuple) :
-        d = protocol2http.alerta(alerta.timestamp)
-        r = http.alerta(**d)
-        code  = r.status_code
-        if code != 200:
-            raise THttpError(f"Error http {code}")
-        if r.json().get("status") == False:
-            raise THttpAns(f"Error {r.json()}")    
+        try:
+            d = protocol2http.alerta(alerta.timestamp)
+            r = http.alerta(**d)
+            code  = r.status_code
+            if code != 200:
+                raise THttpError(f"Error http {code}")
+            if r.json().get("status") == False:
+                raise THttpAns(f"Error {r.json()}")    
 
-        return r.status_code
-
+            return r.status_code
+        except (requests.exceptions.RequestException, 
+                urllib3.exceptions.ProtocolError,
+                requests.exceptions.ConnectionError,
+                http.client.RemoteDisconnected) as e:
+            raise THttpError(f"Error {e}")
     
     @staticmethod
     def tarifa(http: atuHttp.AtuHttp) :
-        r = http.tarifa()
-        code  = r.status_code
-        if code != 200:
-            raise THttpError(f"Error http {code}")
-        if r.json().get("status") == False:
-            raise THttpAns(f"Error {r.json()}") 
-        r = http2protocol.tarifa(r.json())
-        return r
+        try:
+            r = http.tarifa()
+            code  = r.status_code
+            if code != 200:
+                raise THttpError(f"Error http {code}")
+            if r.json().get("status") == False:
+                raise THttpAns(f"Error {r.json()}") 
+            r = http2protocol.tarifa(r.json())
+            return r
+        except (requests.exceptions.RequestException, 
+            urllib3.exceptions.ProtocolError,
+            requests.exceptions.ConnectionError,
+            http.client.RemoteDisconnected) as e:
+            raise THttpError(f"Error {e}")
     
     @staticmethod
     def posiciones(http: atuHttp.AtuHttp) :
-        r = http.posiciones()
-        code  = r.status_code
-        if code != 200:
-            raise THttpError(f"Error http {code}")
-        if r.json().get("status") == False:
-            raise THttpAns(f"Error {r.json()}") 
-        FAKE = App.config().getboolean(section="FAKEDATA", option="POSICIONES_FAKE")
-        if FAKE:
-            r = fake_data.posicionesBuff
-        else:
-            r = http2protocol.obtener_posiciones(r.json())
-        return r
+        try:
+            r = http.posiciones()
+            code  = r.status_code
+            if code != 200:
+                raise THttpError(f"Error http {code}")
+            if r.json().get("status") == False:
+                raise THttpAns(f"Error {r.json()}") 
+            FAKE = App.config().getboolean(section="FAKEDATA", option="POSICIONES_FAKE")
+            if FAKE:
+                r = fake_data.posicionesBuff
+            else:
+                r = http2protocol.obtener_posiciones(r.json())
+            return r
+        except (requests.exceptions.RequestException, 
+        urllib3.exceptions.ProtocolError,
+        requests.exceptions.ConnectionError,
+        http.client.RemoteDisconnected) as e:
+            raise THttpError(f"Error {e}")
 
     @staticmethod
     def hoja_de_ruta(http: atuHttp.AtuHttp) :
-        r = http.hoja_de_ruta()
-        code  = r.status_code
-        if code != 200:
-            raise THttpError(f"Error http {code}")
-        if r.json().get("status") == False:
-            raise THttpAns(f"Error {r.json()}") 
-        FAKE = App.config().getboolean(section="FAKEDATA", option="HOJA_DE_RUTA_FAKE")
-        if FAKE:
-            r = fake_data.paraderos
-        else:
-            r = http2protocol.hoja_de_ruta(r.json())
-        return r
-
+        try:
+            r = http.hoja_de_ruta()
+            code  = r.status_code
+            if code != 200:
+                raise THttpError(f"Error http {code}")
+            if r.json().get("status") == False:
+                raise THttpAns(f"Error {r.json()}") 
+            FAKE = App.config().getboolean(section="FAKEDATA", option="HOJA_DE_RUTA_FAKE")
+            if FAKE:
+                r = fake_data.paraderos
+            else:
+                r = http2protocol.hoja_de_ruta(r.json())
+            return r
+        except (requests.exceptions.RequestException, 
+        urllib3.exceptions.ProtocolError,
+        requests.exceptions.ConnectionError,
+        http.client.RemoteDisconnected) as e:
+            raise THttpError(f"Error {e}")
 
     @staticmethod
     def tickets(http: atuHttp.AtuHttp, t: "list[tickets_data_tuple]"):
-        d = protocol2http.tickets(t)
-        r = http.tickets_generados(**d)
-        code  = r.status_code
-        if code != 200:
-            raise THttpError(f"Error http {code}")
+        try:
+            d = protocol2http.tickets(t)
+            r = http.tickets_generados(**d)
+            code  = r.status_code
+            if code != 200:
+                raise THttpError(f"Error http {code}")
 
-        if r.json().get("status") == False:
-            raise THttpAns(f"Error {r.json()}") 
-        return r
+            if r.json().get("status") == False:
+                raise THttpAns(f"Error {r.json()}") 
+            return r
+        except (requests.exceptions.RequestException, 
+        urllib3.exceptions.ProtocolError,
+        requests.exceptions.ConnectionError,
+        http.client.RemoteDisconnected) as e:
+            raise THttpError(f"Error {e}")
 
 
 

@@ -19,9 +19,11 @@ class AtuHttp:
     def _request(self, method="POST", url="", body = dict(), **kwargs):
         #session.request("POST", url="https://billingws.gpstracking.pe/v1/api/auth/operator", json=data)
         resp = self.session.request(method, url=f"{url}", json=body)
+        self.session.close()
         return resp
 
     def alerta(self, token = "",**kwargs ):
+        self.session = requests.session()
         required=["timestamp"]
         if not all( r in kwargs for r in required):
             raise InvalidParameters("Falta un parametro en alerta " + " ".join(required))
@@ -29,6 +31,7 @@ class AtuHttp:
         return self._request("POST", f"{self.base_url}operator/alert", body={**kwargs})
 
     def login(self, **kwargs):
+        self.session = requests.session()
         required = ["pattern_code", "id"]
         if not all( r in kwargs for r in required):
             raise InvalidParameters("Falta un parametro en Login " + " ".join(required))
@@ -37,18 +40,22 @@ class AtuHttp:
         return res
 
     def hoja_de_ruta(self, token ="", **kwargs):
+        self.session = requests.session()
         self.session.headers['Authorization'] = f'Bearer {self.token if not token else token}'
         return self._request("GET", f"{self.base_url}arrivals", body={**kwargs})
 
     def posiciones(self, token= "", **kwargs):
+        self.session = requests.session()
         self.session.headers['Authorization'] = f'Bearer {self.token if not token else token}'
         return self._request("GET", f"{self.base_url}position", body={**kwargs})
 
     def tarifa(self, token= "", **kwargs):
+        self.session = requests.session()
         self.session.headers['Authorization'] = f'Bearer {self.token if not token else token}'
         return self._request("GET", f"{self.base_url}tariffs", body={**kwargs})
 
     def tickets_generados(self, token= "", **kwargs):
+        self.session = requests.session()
         required = ["payed", "canceled"]
         if not all( r in kwargs for r in required):
             raise InvalidParameters("Falta un parametro en tickets_generados " + " ".join(required))
