@@ -92,7 +92,7 @@ class ConnectionThread(threading.Thread):
             while True:
                 Tlogin = prtcl.login_tuple(ver = 1,
                                           imei = 866989058524023,
-                                          pattern_code = b"4053",
+                                          pattern_code = b">>" ,#b"4053",
                                           token = b"")
                 Blogin = prtcl.Imain.loginW(Tlogin)
                 self.io.write(Blogin)
