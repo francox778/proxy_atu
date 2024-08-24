@@ -15,12 +15,13 @@ import protocolV1_1.protocol_layer_two_request as request
 
 
 # 0: next 1: current 2: before
-posicion0 = content.posiciones_data_tuple(0, b"B3I-752", -5)
-posicion1 = content.posiciones_data_tuple(0, b"BAW-915", -6)
-posicion3 = content.posiciones_data_tuple(1, b"ES UN PARADERO DE PRUEBA", -8)
 posicion4 = content.posiciones_data_tuple(2, b"AHP-813", -9)
 posicion5 = content.posiciones_data_tuple(2, b"BAW-914", -8)
 posicion2 = content.posiciones_data_tuple(2, b"AAU-821", -7)
+posicion3 = content.posiciones_data_tuple(1, b"ES UN PARADERO DE PRUEBA", -8)
+posicion0 = content.posiciones_data_tuple(0, b"B3I-752", -5)
+posicion1 = content.posiciones_data_tuple(0, b"BAW-915", -6)
+
 
 #posicionesBuff = prtcl.Icontent.posicionesW( [posicion0, posicion1, posicion2 ,posicion3, posicion4, posicion5] )
 posicionesBuff = [posicion0, posicion1, posicion2 ,posicion3, posicion4, posicion5]

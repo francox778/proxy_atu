@@ -16,7 +16,7 @@ import echos
 
 import db.db_interface as db
 import posicionesInestabilidad
-
+import posicionesInesParche
 
 
 import colored_logger
@@ -50,6 +50,7 @@ class ConnectionThread(threading.Thread):
         self.posiciones_timeout = 15 # 100
         self.enable_posicion = enable_posicion 
         self.posiciones_inestabilidad = posicionesInestabilidad.PosicionesFixer()
+        self.posiciones_keeper = posicionesInesParche.PosicionesKeeper()
         self.posiciones_prev_tuple = []
         # db
         self.db = db.globalDb
@@ -191,23 +192,28 @@ class ConnectionThread(threading.Thread):
             return
         if time.perf_counter() - self.posiciones_timer > self.posiciones_timeout:
             # 1. interpreto la data
-            Tposiciones = thttp.posiciones(self.http) 
+            Tposiciones_orig = thttp.posiciones(self.http) 
             # 2. Actualizo el estabilizador.
-            self.posiciones_inestabilidad.new_message(Tposiciones)
-            Tposiciones = self.posiciones_inestabilidad.position
+            #self.posiciones_inestabilidad.new_message(Tposiciones)
+            
+            #Tposiciones = self.posiciones_inestabilidad.position
+            Tposiciones = self.posiciones_keeper.process(Tposiciones_orig)
+            Bposiciones = prtcl.Icontent.posicionesW(Tposiciones)
+            self.io.write(Bposiciones) 
+            self.db.update_row_posiciones(self.imei, len(Bposiciones))
             # 3. Si la data del estabilizador cambio con respecto al ultimo dato que envie. hare el envio.
-            if not self.posiciones_inestabilidad.position_equal(self.posiciones_prev_tuple):
-                Bposiciones = prtcl.Icontent.posicionesW(Tposiciones)
-                self.io.write(Bposiciones) 
-                self.db.update_row_posiciones(self.imei, len(Bposiciones))
+            #if not self.posiciones_inestabilidad.position_equal(self.posiciones_prev_tuple):
+            #    Bposiciones = prtcl.Icontent.posicionesW(Tposiciones)
+            #    self.io.write(Bposiciones) 
+            #    self.db.update_row_posiciones(self.imei, len(Bposiciones))
             # 4. a conenction thread solo le importa comparar lo ultimo que envio!.            
-            self.posiciones_prev_tuple = Tposiciones
+            #self.posiciones_prev_tuple = Tposiciones
 
             # 5. si la data es 0 consultare cada 30 segundos? en lugar de 10
-            if len(Tposiciones) > 0:
+            if len(Tposiciones_orig) > 0:
                 self.posiciones_timer = time.perf_counter()
                 self.posiciones_timeout = 15
-                logger.info(f"{myfmt('pos_detec')}::{self.imei} posiciones activo {len(Tposiciones)}!!")
+                logger.info(f"{myfmt('pos_detec')}::{self.imei} posiciones activo orig {len(Tposiciones_orig)} new {len(Tposiciones)} !!")
             else:
                 self.posiciones_timer = time.perf_counter()
                 self.posiciones_timeout = 30
@@ -278,7 +284,6 @@ class ConnectionThread(threading.Thread):
     def ping_handler(self, packet_data):
         try:
             # Enviamos ACK
-            
             Tping = prtcl.Imain.pingR(packet_data)
             Bping = prtcl.Imain.pingW(Tping)
             self.io.write(Bping)
