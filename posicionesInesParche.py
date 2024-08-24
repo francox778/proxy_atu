@@ -39,6 +39,8 @@ class PosicionesKeeper:
     # 0: next 1: current 2: before
     def process(self, posiciones : "list[posiciones_data_tuple]") -> "list[posiciones_data_tuple]":
         # reading before
+        if len(posiciones) == 0:
+            return posiciones
         n_before  = 0
         n_next    = 0
         n_current = 0
@@ -81,15 +83,15 @@ class PosicionesKeeper:
         else:
             logger.error("c_next1+3?")
 
-        self.c_current = posicion0[n_before]
+        self.c_current = posiciones[n_before]
 
         ## PARCHE LOGICA
         self.c_before3 = self.b_before3 if self.c_before3 == None else self.c_before3
         self.c_before2 = self.b_before2 if self.c_before2 == None else self.c_before2
         self.c_before1 = self.b_before1 if self.c_before1 == None else self.c_before1
         self.c_current = self.b_current if self.c_current == None else self.c_current
-        self.c_next2   = self.c_next2 if self.c_next2 == None else self.c_next2
-        self.c_next1   = self.c_next1 if self.c_next1 == None else self.c_next1
+        self.c_next2   = self.b_next2 if self.c_next2 == None else self.c_next2
+        self.c_next1   = self.b_next1 if self.c_next1 == None else self.c_next1
 
         ## UPDATE
         self.b_before3 = self.c_before3

@@ -91,7 +91,7 @@ class ConnectionThread(threading.Thread):
             self.io = io.packet_reader(s)
             while True:
                 Tlogin = prtcl.login_tuple(ver = 1,
-                                          imei = 866989058529345,
+                                          imei = 866989058597383,
                                           pattern_code = b"" ,#b"4053",
                                           token = b"")
                 Blogin = prtcl.Imain.loginW(Tlogin)
