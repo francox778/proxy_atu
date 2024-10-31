@@ -136,26 +136,51 @@ class http2protocol():
                     posType = 1
                 else:   #before
                     posType = 2
-                diff: str = posicion.get("difference")
-                if diff.startswith("+-"):
-                    diff = diff.replace("-","")  
-                
-                ### VERSION SPECIFIC 2 START
-                no_symbol = False
-                if version == 2:
-                    if not diff.startswith("+") and not diff.startswith("-"):
-                        no_symbol = True
-                ### VERSION SPECIFIC 2 END
-                try:
-                    difference = int(diff) if diff else 0
-                except ValueError as e:
-                    print(f"ValueError {diff}")
-                    difference = 0
 
-                ### VERSION SPECIFIC 2 START
-                if no_symbol and difference != 0:
-                    difference += 2000
-                ### VERSION SPECIFIC 2 END
+
+                diff: str = posicion.get("difference")
+                difference = 0
+
+                if version == 1: #solo recibe el numero
+                    if not diff:
+                        diff = ""
+                    
+                    if diff.startswith("+-"):
+                        diff = diff.replace("-","")   
+
+                    try:
+                        difference = int(diff) if diff else 0
+                    except ValueError as e:
+                        print(f"ValueError {diff}")
+                        difference = 0
+                        
+                elif version == 2: 
+                    flag_no_symbol  = False
+                    flag_send_empty = False
+                    if not diff:
+                        diff = ""
+                        flag_send_empty = True
+                    
+                    if diff.startswith("+-"):
+                        diff = diff.replace("-","")  
+
+                    if not diff.startswith("+") and not diff.startswith("-"):
+                        flag_no_symbol = True
+                    
+                    ### VERSION SPECIFIC 2 END
+                    try:
+                        difference = int(diff) if diff else 0
+                    except ValueError as e:
+                        print(f"ValueError {diff}")
+                        difference = 0
+
+                    ### VERSION SPECIFIC 2 START
+                    if flag_no_symbol and difference != 0:
+                        difference += 2000
+
+                    if flag_send_empty:
+                        difference = 1000
+
 
                 t  = posiciones_data_tuple(
                         posType,
@@ -166,7 +191,7 @@ class http2protocol():
                 result.append(t)
             return result
         except Exception as e:
-            logger.error(f"{e}") 
+            logger.error(f"{e}", exc_info=True) 
             return [] 
 
 
