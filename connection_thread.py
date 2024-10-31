@@ -194,7 +194,7 @@ class ConnectionThread(threading.Thread):
         if time.perf_counter() - self.posiciones_timer > self.posiciones_timeout:
             #INTERMITENCIA.
             # 1. interpreto la data
-            Tposiciones = thttp.posiciones(self.http)
+            Tposiciones = thttp.posiciones(self.http, self.version)
             # 2. Actualizo el estabilizador.
             self.posiciones_inestabilidad.new_message(Tposiciones)
             Tposiciones = self.posiciones_inestabilidad.position
