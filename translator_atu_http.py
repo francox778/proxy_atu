@@ -116,7 +116,7 @@ class ThttpRequests():
 
     
     @staticmethod
-    def posiciones(http: atuHttp.AtuHttp) :
+    def posiciones(http: atuHttp.AtuHttp, version) :
         try:
             r = http.posiciones()
         except (requests.exceptions.RequestException, 
@@ -133,7 +133,7 @@ class ThttpRequests():
         if FAKE:
             r = fake_data.posicionesBuff
         else:
-            r = http2protocol.obtener_posiciones(r.json())
+            r = http2protocol.obtener_posiciones(r.json(), version)
         return r
 
 

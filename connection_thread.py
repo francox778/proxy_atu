@@ -34,6 +34,7 @@ def myfmt(log: str) -> str:
 class ConnectionThread(threading.Thread):
     def __init__(self, sock, addr, enable_posicion):
         super().__init__()
+        self.version = 0
         self.logged = False
         self.end = False
 
@@ -191,8 +192,32 @@ class ConnectionThread(threading.Thread):
         if not self.enable_posicion:
             return
         if time.perf_counter() - self.posiciones_timer > self.posiciones_timeout:
+            #INTERMITENCIA.
             # 1. interpreto la data
-            Tposiciones_orig = thttp.posiciones(self.http) 
+            Tposiciones = thttp.posiciones(self.http)
+            # 2. Actualizo el estabilizador.
+            self.posiciones_inestabilidad.new_message(Tposiciones)
+            Tposiciones = self.posiciones_inestabilidad.position
+            # 3. Si la data del estabilizador cambio con respecto al ultimo dato que envie. hare el envio.
+            if not self.posiciones_inestabilidad.position_equal(self.posiciones_prev_tuple):
+                Bposiciones = prtcl.Icontent.posicionesW(Tposiciones)
+                self.io.write(Bposiciones)
+                self.db.update_row_posiciones(self.imei, len(Bposiciones))
+            # 4. a conenction thread solo le importa comparar lo ultimo que envio!.
+            self.posiciones_prev_tuple = Tposiciones
+
+            # 5. si la data es 0 consultare cada 30 segundos? en lugar de 10
+            if len(Tposiciones) > 0:
+                self.posiciones_timer = time.perf_counter()
+                self.posiciones_timeout = 12
+                logger.info(f"{myfmt('pos_detec')}::{self.imei} posiciones activo {len(Tposiciones)}!!")
+            else:
+                self.posiciones_timer = time.perf_counter()
+                self.posiciones_timeout = 30
+                logger.info(f"{myfmt('pos_detec')}::{self.imei} posiciones inactivo!!")
+
+            """ # 1. interpreto la data
+            Tposiciones_orig = thttp.posiciones(self.http, self.version) 
             # 2. Actualizo el estabilizador.
             #self.posiciones_inestabilidad.new_message(Tposiciones)
             
@@ -217,7 +242,7 @@ class ConnectionThread(threading.Thread):
             else:
                 self.posiciones_timer = time.perf_counter()
                 self.posiciones_timeout = 30
-                logger.info(f"{myfmt('pos_detec')}::{self.imei} posiciones inactivo!!")
+                logger.info(f"{myfmt('pos_detec')}::{self.imei} posiciones inactivo!!") """
     
 
     def waiting_login(self):
@@ -238,6 +263,7 @@ class ConnectionThread(threading.Thread):
         # Validamos al usuario
         Tlogin = prtcl.login.read(packet_data)
         logger.info(f"{myfmt('login')}:: intento de conexion : {Tlogin}")
+        self.version = Tlogin.ver
         self.imei = str(Tlogin.imei)
         self.token = Tlogin.token
         self.db.update_row_registro(self.imei)
@@ -388,7 +414,7 @@ class ConnectionThread(threading.Thread):
 
     def posiciones_req_handler(self, data):
         try:
-            Tposiciones = thttp.posiciones(self.http)
+            Tposiciones = thttp.posiciones(self.http, self.version)
             Bposiciones = prtcl.Icontent.posicionesW(Tposiciones)
             self.io.write(Bposiciones)
             logger.info(f"{myfmt('pos')}::{self.imei} consulta Exitosa!") 

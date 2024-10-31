@@ -162,7 +162,7 @@ if "__main__" == __name__:
     print("p full", len(posicionesFixer._posiciones))
     posicionesFixer.new_message([])
     print("p full", len(posicionesFixer._posiciones))
-    time.sleep(18)
+    time.sleep(188)
     posicionesFixer.new_message([])
     print("p full", len(posicionesFixer._posiciones))
     posicionesFixer.new_message([])

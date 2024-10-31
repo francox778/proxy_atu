@@ -115,7 +115,7 @@ class http2protocol():
             raise e 
     
     @staticmethod 
-    def obtener_posiciones(res) -> "list[posiciones_data_tuple]":
+    def obtener_posiciones(res, version) -> "list[posiciones_data_tuple]":
         try:
             #type: int              0: next 1: current 2: before
             #plate: bytearray       
@@ -136,14 +136,27 @@ class http2protocol():
                     posType = 1
                 else:   #before
                     posType = 2
-                diff:str = posicion.get("difference")
+                diff: str = posicion.get("difference")
                 if diff.startswith("+-"):
                     diff = diff.replace("-","")  
+                
+                ### VERSION SPECIFIC 2 START
+                no_symbol = False
+                if version == 2:
+                    if not diff.startswith("+") and not diff.startswith("-"):
+                        no_symbol = True
+                ### VERSION SPECIFIC 2 END
                 try:
                     difference = int(diff) if diff else 0
                 except ValueError as e:
                     print(f"ValueError {diff}")
                     difference = 0
+
+                ### VERSION SPECIFIC 2 START
+                if no_symbol and difference != 0:
+                    difference += 2000
+                ### VERSION SPECIFIC 2 END
+
                 t  = posiciones_data_tuple(
                         posType,
                         posicion.get("stop").encode("latin-1") if  posType == 1 else posicion.get("plate").encode("latin-1"), 
@@ -153,7 +166,8 @@ class http2protocol():
                 result.append(t)
             return result
         except Exception as e:
-            raise e 
+            logger.error(f"{e}") 
+            return [] 
 
 
 

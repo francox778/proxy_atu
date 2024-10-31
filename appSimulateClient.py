@@ -90,8 +90,8 @@ class ConnectionThread(threading.Thread):
             s.connect((self.ip, self.port))
             self.io = io.packet_reader(s)
             while True:
-                Tlogin = prtcl.login_tuple(ver = 1,
-                                          imei = 866989058597383,
+                Tlogin = prtcl.login_tuple(ver = 2,
+                                          imei = 866989058569366,
                                           pattern_code = b"" ,#b"4053",
                                           token = b"")
                 Blogin = prtcl.Imain.loginW(Tlogin)
@@ -267,7 +267,7 @@ class ConnectionThread(threading.Thread):
             7: req posiciones                                               
         """
         if item == 0: #866989058568582
-            Blogin = prtcl.Imain.loginW( prtcl.login_tuple(ver = 1, imei = 866989058614188 , pattern_code = b"4053", token = b""))
+            Blogin = prtcl.Imain.loginW( prtcl.login_tuple(ver = 2, imei = 866989058569366 , pattern_code = b"4053", token = b""))
             self.io.write(Blogin)
 
         if item == 1:
