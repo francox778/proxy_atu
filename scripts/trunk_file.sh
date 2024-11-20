@@ -17,12 +17,12 @@ if [ -z "$MAX_LINES" ]; then
 fi
 
 
-while [[ 1 ]]
-do
-    line_counter=$(wc -l $FILENAME | awk '{print $1}')
-    if (( line_counter > MAX_LINES )); then
-        lineas_a_eliminar=$((line_counter/3))
-        ex -sc "1,${lineas_a_eliminar}d | wq" "$FILENAME"
-    fi
-    sleep 20
-done
+#while [[ 1 ]]
+#do
+#    line_counter=$(wc -l $FILENAME | awk '{print $1}')
+#    if (( line_counter > MAX_LINES )); then
+#        lineas_a_eliminar=$((line_counter/3))
+#        ex -sc "1,${lineas_a_eliminar}d | wq" "$FILENAME"
+#    fi
+#    sleep 20
+#done

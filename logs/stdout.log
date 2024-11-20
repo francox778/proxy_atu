@@ -1,14 +1,18 @@
- 31-May-24 13:37:27 :: test :: DEBUG :: hola 5
- 31-May-24 13:37:27 :: test :: INFO :: hola 5
- 31-May-24 13:37:27 :: test :: WARNING :: hola 5
- 31-May-24 13:37:27 :: test :: ERROR :: hola .................5
- 31-May-24 13:37:27 :: test :: CRITICAL :: hola 5
- 31-May-24 13:37:27 :: test2 :: DEBUG :: que pasa chavales
- 31-May-24 13:37:27 :: test2 :: DEBUG :: que pasa chavales
- 31-May-24 13:37:27 :: test2 :: DEBUG :: que pasa chavales
- 31-May-24 13:37:27 :: test2 :: INFO :: que pasa chavales
- 31-May-24 13:37:27 :: test2 :: ERROR :: me mandaron al stderr. Buenas aqui es?
- 31-May-24 13:37:27 :: test3 :: DEBUG :: hola 5
- 31-May-24 13:37:27 :: test3 :: INFO :: hola 5
- 31-May-24 13:37:27 :: test3 :: WARNING :: hola 5
- 31-May-24 13:37:27 :: test3 :: CRITICAL :: hola 5
+ [19-11-24 21:14:44][main    ][INFO ] ==========******* APLICACION INICIADA ********==========
+ [19-11-24 21:14:44][main    ][INFO ] conf IP:127.0.0.1 PORT:22222
+ [19-11-24 21:14:44][main    ][INFO ] 
+ENABLE_DB: True, 
+CLEAN_DB False
+ENABLE_POSICION True
+{'registro': 'registro', 'posiciones': 'posiciones', 'login': 'login', 'logout': 'logout', 'ping': 'ping', 'response': 'response', 'tickets': 'tickets', 'tarifa': 'tarifa', 'hoja_de_ruta': 'hoja_de_ruta', 'alerta': 'alerta', 'host': '127.0.0.1', 'user': 'postgres', 'password': 'feelsbadman123', 'database': 'test'}
+ [19-11-24 21:14:44][ISqlite ][INFO ] ya existe registro
+ [19-11-24 21:14:44][ISqlite ][INFO ] ya existe posiciones
+ [19-11-24 21:14:44][ISqlite ][INFO ] ya existe login
+ [19-11-24 21:14:44][ISqlite ][INFO ] ya existe logout
+ [19-11-24 21:14:44][ISqlite ][INFO ] ya existe response
+ [19-11-24 21:14:44][ISqlite ][INFO ] ya existe tickets
+ [19-11-24 21:14:44][ISqlite ][INFO ] ya existe tarifa
+ [19-11-24 21:14:44][ISqlite ][INFO ] ya existe hoja_de_ruta
+ [19-11-24 21:14:44][ISqlite ][INFO ] ya existe ping
+ [19-11-24 21:14:44][ISqlite ][INFO ] ya existe alerta
+ [19-11-24 21:14:44][acc_thr ][INFO ] iniciado
