@@ -3,4 +3,4 @@ borrar_utils/*
 venv/
 logs/
 dbsqlite/stats.db
-__pycache__
+__pycache__/

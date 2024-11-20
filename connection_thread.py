@@ -192,9 +192,7 @@ class ConnectionThread(threading.Thread):
         if not self.enable_posicion:
             return
         if time.perf_counter() - self.posiciones_timer > self.posiciones_timeout:
-            
             nPosiciones = self.send_posiciones()
-
             if nPosiciones > 0:
                 self.posiciones_timer = time.perf_counter()
                 self.posiciones_timeout = 12
@@ -245,12 +243,10 @@ class ConnectionThread(threading.Thread):
         self.io.write(Bposiciones)
         self.db.update_row_posiciones(self.imei, len(Bposiciones))
     
-        for index, posicion in enumerate(Tposiciones):
-            logger.debug(f"{myfmt('pos')}::{self.imei} --------------- ") 
-            logger.debug(f"{myfmt('pos')}::{self.imei} - {index} {posicion.type}") 
-            logger.debug(f"{myfmt('pos')}::{self.imei} - {index} {posicion.plate}") 
-            logger.debug(f"{myfmt('pos')}::{self.imei} - {index} {posicion.difference}") 
-        logger.debug(f"{myfmt('pos')}::{self.imei} --------------- ") 
+        if( len(Tposiciones) > 0) :
+            for index, posicion in enumerate(Tposiciones):
+                logger.debug(f"{myfmt('pos')}::{self.imei} {index} {posicion.type} {posicion.plate} {posicion.difference}") 
+        
         return len(Tposiciones)
 
 

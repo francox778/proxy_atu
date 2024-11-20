@@ -13,7 +13,8 @@ trap limpiar EXIT
 #pid1=$!
 #./scripts/trunk_file.sh ./logs/stdout.log 10000 &
 #pid2=$!
-sudo logrotate --state ./logrotate.status ./logrotate.conf -f
+touch logs/stdout.log
+touch logs/stderr.log
 python ./appProxy.py 1>logs/stdout.log 2>logs/stderr.log &
 pid3=$!
 
@@ -22,5 +23,7 @@ echo "Procesos iniciados: $pid3"
 
 while [ 1 ]
 do
-  sleep 100000
+  sleep 30
+  #echo "dale"
+  #logrotate --state ./logrotate.status ./logrotate.conf -f
 done
