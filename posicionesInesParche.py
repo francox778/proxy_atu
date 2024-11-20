@@ -12,7 +12,7 @@ import time
 import colored_logger
 import logging
 import colorama as cr
-logger = colored_logger.Logger("posInes", logging.DEBUG, cr.Fore.CYAN)
+logger = colored_logger.Logger("posInesX", logging.DEBUG, cr.Fore.CYAN)
 logger.add_stderr(level=logging.ERROR)
 
 

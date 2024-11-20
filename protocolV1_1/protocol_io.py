@@ -78,6 +78,15 @@ class packet_reader():
         logger.debug(echos.bytearray2str(header + data + footer))
         self.sock.send(header + data + footer)
 
+    @staticmethod
+    def writeBuff(data) -> bytearray:  
+        # encapsular el paquete header y footer
+        data_len = len(data)
+        header = struct.pack(f"{protocol_headers.ENDIANESS}BH", protocol_headers.SOF, data_len)
+        footer = struct.pack(f"{protocol_headers.ENDIANESS}HB", 0x0000, protocol_headers.EOF)
+        logger.debug(echos.bytearray2str(header + data + footer))
+        return header + data + footer
+
     def readBlocking(self, timeout: float):
         try:
             start = time.perf_counter()

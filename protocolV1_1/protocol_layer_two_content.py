@@ -273,9 +273,10 @@ class posiciones_data_tuple(typing.NamedTuple):
     plate: bytearray
     difference: int
     def __str__(self) -> str:
-        return   f"""type :              {self.type}
-plate:              {self.plate.decode('latin-1')}
-difference:         {self.difference}"""
+        return   f"""   
+    type       :{self.type}
+    plate:     {self.plate.decode('latin-1')}
+    difference:{self.difference}"""
 
 class posiciones_data():
     def __init__(buf):

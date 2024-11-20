@@ -23,10 +23,10 @@ import colored_logger
 import logging
 import colorama as cr
 
-logger = colored_logger.Logger("conn_thr", logging.INFO, cr.Fore.CYAN)
+logger = colored_logger.Logger("conn_thr", logging.DEBUG, cr.Fore.CYAN)
 logger.add_stderr(logging.ERROR)
 
-H_TXT_LEN = 8
+H_TXT_LEN = 9
 def myfmt(log: str) -> str:
     return log.ljust(H_TXT_LEN)
 
@@ -50,9 +50,8 @@ class ConnectionThread(threading.Thread):
         self.posiciones_timer = time.perf_counter()
         self.posiciones_timeout = 15 # 100
         self.enable_posicion = enable_posicion 
-        self.posiciones_inestabilidad = posicionesInestabilidad.PosicionesFixer()
-        self.posiciones_keeper = posicionesInesParche.PosicionesKeeper()
-        self.posiciones_prev_tuple = []
+        self.posiciones_inestabilidad = posicionesInestabilidad.PosicionesInestabilidad()
+        # self.posiciones_prev_tuple = []
         # db
         self.db = db.globalDb
 
@@ -110,7 +109,7 @@ class ConnectionThread(threading.Thread):
                     logger.error(f"NN packet type invalido")       
                 except io.TimeOutException:
                     self.timeoutCnt = self.timeoutCnt + 1
-                    logger.debug(f"{myfmt('timeout1')}::{self.imei} timeout1 {timeout}s n:{self.timeoutCnt}x{timeout}seg")
+                    #logger.info(f"{myfmt('timeout1')}::{self.imei} timeout1 {timeout}s n:{self.timeoutCnt}x{timeout}seg")
                     if self.timeoutCnt == 10:
                         logger.info(f"{myfmt('timeout1')}::{self.imei} conexion inactiva {self.timeoutCnt}x{timeout}seg")
                         raise io.ClosedSocketException
@@ -151,15 +150,15 @@ class ConnectionThread(threading.Thread):
                         break    
                     if self.end:
                         raise io.ClosedSocketException   
-                    self.evaluate_posiciones()
+                    self.periodic_send_posiciones()
 
                 except io.TimeOutException:
                     self.timeoutCnt = self.timeoutCnt + 1
-                    logger.debug(f"{myfmt('timeout2')}::{self.imei} {timeout}s n:{self.timeoutCnt}x{timeout}seg")
+                    #logger.info(f"{myfmt('timeout2')}::{self.imei} {timeout}s n:{self.timeoutCnt}x{timeout}seg")
                     if self.timeoutCnt == 500:
                         logger.info(f"{myfmt('timeout2')}::{self.imei} conexion inactiva {self.timeoutCnt}x{timeout}seg")
                         raise io.ClosedSocketException
-                    self.evaluate_posiciones()
+                    self.periodic_send_posiciones()
 
                 except BrokenPipeError as e:
                     logger.error(f"{self.imei} BrokenPipeError.")
@@ -188,33 +187,22 @@ class ConnectionThread(threading.Thread):
             logger.info(f"{self.imei}::conexion_cerrada") 
             #logger.debug(f"{self.imei} conexion_cerrada")
 
-    def evaluate_posiciones(self):
+
+    def periodic_send_posiciones(self):
         if not self.enable_posicion:
             return
         if time.perf_counter() - self.posiciones_timer > self.posiciones_timeout:
-            #INTERMITENCIA.
-            # 1. interpreto la data
-            Tposiciones = thttp.posiciones(self.http, self.version)
-            # 2. Actualizo el estabilizador.
-            self.posiciones_inestabilidad.new_message(Tposiciones)
-            Tposiciones = self.posiciones_inestabilidad.position
-            # 3. Si la data del estabilizador cambio con respecto al ultimo dato que envie. hare el envio.
-            if not self.posiciones_inestabilidad.position_equal(self.posiciones_prev_tuple):
-                Bposiciones = prtcl.Icontent.posicionesW(Tposiciones)
-                self.io.write(Bposiciones)
-                self.db.update_row_posiciones(self.imei, len(Bposiciones))
-            # 4. a conenction thread solo le importa comparar lo ultimo que envio!.
-            self.posiciones_prev_tuple = Tposiciones
+            
+            nPosiciones = self.send_posiciones()
 
-            # 5. si la data es 0 consultare cada 30 segundos? en lugar de 10
-            if len(Tposiciones) > 0:
+            if nPosiciones > 0:
                 self.posiciones_timer = time.perf_counter()
                 self.posiciones_timeout = 12
-                logger.info(f"{myfmt('pos_detec')}::{self.imei} posiciones activo {len(Tposiciones)}!!")
+                logger.info(f"{myfmt('pos')}::{self.imei} posiciones activo {nPosiciones}!!")
             else:
                 self.posiciones_timer = time.perf_counter()
                 self.posiciones_timeout = 30
-                logger.info(f"{myfmt('pos_detec')}::{self.imei} posiciones inactivo!!")
+                logger.info(f"{myfmt('pos')}::{self.imei} posiciones inactivo!!")
 
             """ # 1. interpreto la data
             Tposiciones_orig = thttp.posiciones(self.http, self.version) 
@@ -244,6 +232,27 @@ class ConnectionThread(threading.Thread):
                 self.posiciones_timeout = 30
                 logger.info(f"{myfmt('pos_detec')}::{self.imei} posiciones inactivo!!") """
     
+
+
+    def send_posiciones(self) -> int:
+        #INTERMITENCIA.
+        # 1. interpreto la data
+        Tposiciones = thttp.posiciones(self.http, self.version)
+        # 2. Actualizo el estabilizador.
+        self.posiciones_inestabilidad.new_message(Tposiciones)
+
+        Bposiciones = prtcl.Icontent.posicionesW(Tposiciones)
+        self.io.write(Bposiciones)
+        self.db.update_row_posiciones(self.imei, len(Bposiciones))
+    
+        for index, posicion in enumerate(Tposiciones):
+            logger.debug(f"{myfmt('pos')}::{self.imei} --------------- ") 
+            logger.debug(f"{myfmt('pos')}::{self.imei} - {index} {posicion.type}") 
+            logger.debug(f"{myfmt('pos')}::{self.imei} - {index} {posicion.plate}") 
+            logger.debug(f"{myfmt('pos')}::{self.imei} - {index} {posicion.difference}") 
+        logger.debug(f"{myfmt('pos')}::{self.imei} --------------- ") 
+        return len(Tposiciones)
+
 
     def waiting_login(self):
         pass
@@ -412,13 +421,11 @@ class ConnectionThread(threading.Thread):
             logger.error(f"{myfmt('hoja')}::{self.imei} {e}") 
             self.db.update_row_response(self.imei, len(Bresponse) + 4)
 
+
     def posiciones_req_handler(self, data):
         try:
-            Tposiciones = thttp.posiciones(self.http, self.version)
-            Bposiciones = prtcl.Icontent.posicionesW(Tposiciones)
-            self.io.write(Bposiciones)
-            logger.info(f"{myfmt('pos')}::{self.imei} consulta Exitosa!") 
-            self.db.update_row_posiciones(self.imei, len(Bposiciones) + 4)
+            logger.info(f"{myfmt('pos')}::{self.imei} req from device handler") 
+            self.send_posiciones()
         except THttpAns as e:
             self.end = True
             Bresponse = prtcl.Imain.responseW(prtcl.response_tuple(
